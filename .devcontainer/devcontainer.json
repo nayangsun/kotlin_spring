@@ -1,0 +1,44 @@
+{
+  "name": "kotlin-spring",
+  "dockerComposeFile": ["docker-compose.yml"],
+  "service": "kotlin-spring",
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2.5.7": {
+      "installZsh": true,
+      "username": "vscode",
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/java:1.8.0": {
+      "version": "25",
+      "jdkDistro": "ms",
+      "installGradle": true,
+      "installMaven": true
+    },
+    "ghcr.io/devcontainers/features/github-cli:1.1.0": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "java.configuration.runtimes": [
+          {
+            "name": "JavaSE-25",
+            "path": "/usr/local/sdkman/candidates/java/current",
+            "default": true
+          }
+        ]
+      },
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "vscjava.vscode-java-pack",
+        "fwcd.kotlin",
+        "vmware.vscode-boot-dev-pack",
+        "GabrielBB.vscode-lombok"
+      ]
+    }
+  },
+  "forwardPorts": [8080],
+  "shutdownAction": "stopCompose"
+}

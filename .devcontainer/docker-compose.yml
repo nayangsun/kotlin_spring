@@ -1,0 +1,25 @@
+version: '3.8'
+services:
+  kotlin-spring:
+    image: mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+    init: true
+    volumes:
+      - ..:/workspace:cached
+      - $HOME/.ssh:/home/vscode/.ssh:ro
+      - $HOME/.gitconfig:/home/vscode/.gitconfig:ro
+    command: sleep infinity
+
+  postgresql:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: kotlin_spring_development
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+
+volumes:
+  postgresql_data:
