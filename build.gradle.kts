@@ -1,9 +1,10 @@
 plugins {
-	kotlin("jvm") version "2.3.21"
-	kotlin("plugin.spring") version "2.3.21"
-	id("org.springframework.boot") version "4.0.6"
-	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("plugin.jpa") version "2.3.21"
+	alias(libs.plugins.kotlin.jvm)
+	alias(libs.plugins.kotlin.spring)
+	alias(libs.plugins.spring.boot)
+	alias(libs.plugins.spring.dependency.management)
+	alias(libs.plugins.kotlin.jpa)
+	alias(libs.plugins.detekt)
 }
 
 group = "com.example"
@@ -20,17 +21,33 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.flywaydb:flyway-core")
-	implementation("org.flywaydb:flyway-database-postgresql")
-	implementation("org.springframework.boot:spring-boot-starter-webmvc")
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("tools.jackson.module:jackson-module-kotlin")
-	runtimeOnly("org.postgresql:postgresql")
-	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testRuntimeOnly("com.h2database:h2")
+	implementation(libs.springdoc.openapi)
+	implementation(libs.spring.boot.starter.data.jpa)
+	implementation(libs.spring.boot.starter.flyway)
+	runtimeOnly(libs.flyway.database.postgresql)
+	implementation(libs.spring.boot.starter.webmvc)
+	implementation(libs.kotlin.reflect)
+	implementation(libs.jackson.module.kotlin)
+	runtimeOnly(libs.postgresql)
+
+	// Development helpers
+	developmentOnly(libs.spring.boot.starter.test)
+
+	// Test-only dependencies
+	testImplementation(libs.embedded.postgres)
+	testImplementation(libs.embedded.postgres.binaries.darwin.arm64)
+	testImplementation(libs.embedded.postgres.binaries.darwin.amd64)
+	testImplementation(libs.embedded.postgres.binaries.linux.amd64)
+
+	testImplementation(libs.spring.boot.starter.test)
+	testImplementation(libs.kotlin.test.junit5)
+	testImplementation(libs.mockk)
+	testImplementation(libs.kotest.runner.junit5)
+	testImplementation(libs.kotest.assertions.core)
+	testImplementation(libs.kotest.property)
+	testImplementation(libs.kotest.extensions.spring)
+
+	testRuntimeOnly(libs.h2)
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -49,4 +66,11 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+detekt {
+    toolVersion = libs.versions.detekt.get()
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("config/detekt/detekt.yml"))
 }
