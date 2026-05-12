@@ -6,7 +6,7 @@ kotest = "6.1.11"
 kotlin = "2.3.21"
 mockk = "1.13.16"
 spring-boot = "4.0.6"
-spring-doc = "2.8.5"
+spring-doc = "2.8.6"
 
 [libraries]
 embedded-postgres = { group = "io.zonky.test", name = "embedded-postgres", version.ref = "embedded-postgres" }
