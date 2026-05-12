@@ -1,0 +1,102 @@
+config:
+  validation: true
+
+complexity:
+  CyclomaticComplexMethod:
+    active: true
+    allowedComplexity: 15
+    ignoreSingleWhenExpression: true
+    excludes:
+      - '**/src/test/**'
+
+  LongParameterList:
+    active: true
+    allowedFunctionParameters: 6
+    allowedConstructorParameters: 7
+    ignoreDefaultParameters: true
+    ignoreDataClasses: true
+
+  NestedBlockDepth:
+    active: true
+    allowedDepth: 4
+    excludes:
+      - '**/src/test/**'
+
+exceptions:
+  SwallowedException:
+    active: true
+    allowedExceptionNameRegex: '_|(ignore|expected).*'
+
+  TooGenericExceptionCaught:
+    active: true
+    exceptionNames:
+      - Error
+      - Exception
+      - RuntimeException
+      - Throwable
+    allowedExceptionNameRegex: '_|(ignore|expected).*'
+
+  TooGenericExceptionThrown:
+    active: true
+    exceptionNames:
+      - Error
+      - Exception
+      - RuntimeException
+      - Throwable
+
+naming:
+  PackageNaming:
+    active: true
+    packagePattern: '[a-z]+(\.[a-z][A-Za-z0-9]*)*'
+
+  BooleanPropertyNaming:
+    active: true
+    allowedPattern: '^(is|has|are|can)[A-Z][A-Za-z0-9]*'
+
+empty-blocks:
+  EmptyFunctionBlock:
+    active: true
+    excludes:
+      - '**/src/test/**'
+
+style:
+  FunctionOnlyReturningConstant:
+    active: true
+    excludedFunctions:
+      - healthCheck
+
+  MagicNumber:
+    active: true
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+    ignoreHashCodeFunction: true
+    ignorePropertyDeclaration: true
+    ignoreLocalVariableDeclaration: true
+    ignoreConstantDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreNamedArgument: true
+    ignoreRanges: true
+    excludes:
+      - '**/src/test/**'
+
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+    excludePackageStatements: true
+    excludeImportStatements: true
+
+  ReturnCount:
+    active: true
+    max: 4
+    excludeGuardClauses: true
+    excludes:
+      - '**/src/test/**'
+
+  ThrowsCount:
+    active: false
+
+potential-bugs:
+  active: true

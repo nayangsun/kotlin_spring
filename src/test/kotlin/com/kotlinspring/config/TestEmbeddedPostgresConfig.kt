@@ -1,4 +1,4 @@
-package com.example.kotlin_spring.config
+package com.kotlinspring.config
 
 import com.zaxxer.hikari.HikariDataSource
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
@@ -15,13 +15,13 @@ class TestEmbeddedPostgresConfig {
     fun dataSource(): DataSource {
         val embedded = EmbeddedPostgres.builder()
             .start()
-        
+
         val hikari = HikariDataSource().apply {
             jdbcUrl = embedded.getJdbcUrl("postgres", "postgres")
             username = "postgres"
             isAutoCommit = false
         }
-        
+
         // Wrap to ensure the embedded process closes when the DataSource closes
         return object : HikariDataSource(hikari), AutoCloseable {
             override fun close() {

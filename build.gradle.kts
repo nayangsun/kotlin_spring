@@ -2,12 +2,11 @@ plugins {
 	alias(libs.plugins.kotlin.jvm)
 	alias(libs.plugins.kotlin.spring)
 	alias(libs.plugins.spring.boot)
-	alias(libs.plugins.spring.dependency.management)
 	alias(libs.plugins.kotlin.jpa)
 	alias(libs.plugins.detekt)
 }
 
-group = "com.example"
+group = "com.kotlinspring"
 version = "0.0.1-SNAPSHOT"
 
 java {
@@ -21,9 +20,13 @@ repositories {
 }
 
 dependencies {
+	implementation(platform("org.springframework.boot:spring-boot-dependencies:${libs.versions.spring.boot.get()}"))
+	testImplementation(platform("org.springframework.boot:spring-boot-dependencies:${libs.versions.spring.boot.get()}"))
+
 	implementation(libs.springdoc.openapi)
 	implementation(libs.spring.boot.starter.data.jpa)
 	implementation(libs.spring.boot.starter.flyway)
+	implementation(libs.spring.boot.starter.validation)
 	runtimeOnly(libs.flyway.database.postgresql)
 	implementation(libs.spring.boot.starter.webmvc)
 	implementation(libs.kotlin.reflect)
@@ -41,11 +44,10 @@ dependencies {
 
 	testImplementation(libs.spring.boot.starter.test)
 	testImplementation(libs.kotlin.test.junit5)
-	testImplementation(libs.mockk)
 	testImplementation(libs.kotest.runner.junit5)
 	testImplementation(libs.kotest.assertions.core)
-	testImplementation(libs.kotest.property)
 	testImplementation(libs.kotest.extensions.spring)
+	testImplementation(libs.mockk)
 
 	testRuntimeOnly(libs.h2)
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
