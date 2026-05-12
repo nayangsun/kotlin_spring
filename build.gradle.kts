@@ -41,6 +41,7 @@ dependencies {
 	testImplementation(libs.embedded.postgres.binaries.darwin.arm64)
 	testImplementation(libs.embedded.postgres.binaries.darwin.amd64)
 	testImplementation(libs.embedded.postgres.binaries.linux.amd64)
+	testImplementation(libs.embedded.postgres.binaries.linux.arm64)
 
 	testImplementation(libs.spring.boot.starter.test)
 	testImplementation(libs.kotlin.test.junit5)
@@ -49,7 +50,6 @@ dependencies {
 	testImplementation(libs.kotest.extensions.spring)
 	testImplementation(libs.mockk)
 
-	testRuntimeOnly(libs.h2)
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
