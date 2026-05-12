@@ -13,6 +13,7 @@ embedded-postgres = { group = "io.zonky.test", name = "embedded-postgres", versi
 embedded-postgres-binaries-darwin-amd64 = { group = "io.zonky.test.postgres", name = "embedded-postgres-binaries-darwin-amd64", version = "16.2.0" }
 embedded-postgres-binaries-darwin-arm64 = { group = "io.zonky.test.postgres", name = "embedded-postgres-binaries-darwin-arm64v8", version = "16.2.0" }
 embedded-postgres-binaries-linux-amd64 = { group = "io.zonky.test.postgres", name = "embedded-postgres-binaries-linux-amd64", version = "16.2.0" }
+embedded-postgres-binaries-linux-arm64 = { group = "io.zonky.test.postgres", name = "embedded-postgres-binaries-linux-arm64v8", version = "16.2.0" }
 flyway-database-postgresql = { group = "org.flywaydb", name = "flyway-database-postgresql" }
 h2 = { group = "com.h2database", name = "h2" }
 jackson-module-kotlin = { group = "tools.jackson.module", name = "jackson-module-kotlin" }
