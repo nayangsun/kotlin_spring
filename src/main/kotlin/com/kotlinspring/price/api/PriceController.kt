@@ -45,7 +45,9 @@ class PriceController(
                             ),
                             ExampleObject(
                                 name = "INVALID_ASSET_STATUS",
-                                value = """{"code":"INVALID_ASSET_STATUS","message":"Price can be registered only for ACTIVE assets."}"""
+                                value =
+                                    """{"code":"INVALID_ASSET_STATUS","message":"Price can be registered only """ +
+                                        """for ACTIVE assets."}"""
                             ),
                         ]
                     ),

@@ -15,8 +15,8 @@ import com.kotlinspring.price.domain.PriceHistory
 import com.kotlinspring.price.domain.PriceHistoryRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.shouldBe
 import io.mockk.every
-import io.mockk.match
 import io.mockk.mockk
 import io.mockk.verify
 import java.math.BigDecimal
@@ -44,6 +44,7 @@ class PriceServiceTest : BehaviorSpec({
                     timestamp = timestamp,
                     source = "SYSTEM_A",
                 )
+                var savedPriceHistory: PriceHistory? = null
 
                 every { marketExistenceChecker.existsById(1L) } returns true
                 every { assetRepository.findByMarketIdAndId(1L, 10L) } returns Asset(
@@ -54,22 +55,21 @@ class PriceServiceTest : BehaviorSpec({
                     status = AssetStatus.ACTIVE,
                     currency = AssetCurrency.KRW,
                 )
-                every { priceHistoryRepository.save(any()) } answers { firstArg() }
+                every { priceHistoryRepository.save(any()) } answers {
+                    firstArg<PriceHistory>().also { savedPriceHistory = it }
+                }
                 every { latestPriceRepository.findByAssetId(10L) } returns null
                 every { latestPriceRepository.save(any()) } answers { firstArg() }
 
                 priceService.create(1L, 10L, command)
 
                 verify(exactly = 1) {
-                    priceHistoryRepository.save(
-                        match<PriceHistory> {
-                            it.assetId == 10L &&
-                                it.price == BigDecimal("72000") &&
-                                it.timestamp == timestamp &&
-                                it.source == "SYSTEM_A"
-                        }
-                    )
+                    priceHistoryRepository.save(any())
                 }
+                savedPriceHistory?.assetId shouldBe 10L
+                savedPriceHistory?.price shouldBe BigDecimal("72000")
+                savedPriceHistory?.timestamp shouldBe timestamp
+                savedPriceHistory?.source shouldBe "SYSTEM_A"
                 verify(exactly = 1) {
                     latestPriceRepository.save(
                         LatestPrice(
