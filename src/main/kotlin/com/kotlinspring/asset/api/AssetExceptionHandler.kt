@@ -1,6 +1,7 @@
 package com.kotlinspring.asset.api
 
 import com.kotlinspring.asset.domain.AssetAlreadyExistsException
+import com.kotlinspring.asset.domain.AssetNotFoundException
 import com.kotlinspring.market.domain.MarketNotFoundException
 import io.swagger.v3.oas.annotations.media.Schema
 import org.springframework.http.HttpStatus
@@ -31,6 +32,17 @@ class AssetExceptionHandler {
                 AssetErrorResponse(
                     code = "ASSET_ALREADY_EXISTS",
                     message = exception.message ?: "Asset already exists.",
+                )
+            )
+    }
+
+    @ExceptionHandler(AssetNotFoundException::class)
+    fun handleAssetNotFound(exception: AssetNotFoundException): ResponseEntity<AssetErrorResponse> {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(
+                AssetErrorResponse(
+                    code = "ASSET_NOT_FOUND",
+                    message = exception.message ?: "Asset not found.",
                 )
             )
     }

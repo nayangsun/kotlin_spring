@@ -15,6 +15,14 @@ class AssetRepositoryAdapter(
         return assetJpaRepository.existsByMarketIdAndSymbol(marketId, symbol)
     }
 
+    override fun findAllByMarketId(marketId: Long): List<Asset> {
+        return assetJpaRepository.findAllByMarketIdOrderByIdAsc(marketId).map { it.toDomain() }
+    }
+
+    override fun findByMarketIdAndId(marketId: Long, id: Long): Asset? {
+        return assetJpaRepository.findByMarketIdAndId(marketId, id)?.toDomain()
+    }
+
     override fun save(asset: Asset): Asset {
         return try {
             assetJpaRepository.save(AssetJpaEntity.from(asset)).toDomain()

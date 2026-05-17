@@ -3,6 +3,7 @@ package com.kotlinspring.asset.application
 import com.kotlinspring.asset.domain.Asset
 import com.kotlinspring.asset.domain.AssetAlreadyExistsException
 import com.kotlinspring.asset.domain.AssetCurrency
+import com.kotlinspring.asset.domain.AssetNotFoundException
 import com.kotlinspring.asset.domain.AssetRepository
 import com.kotlinspring.asset.domain.AssetStatus
 import com.kotlinspring.market.domain.MarketExistenceChecker
@@ -12,6 +13,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import io.kotest.matchers.shouldBe
 
 class AssetServiceTest : BehaviorSpec({
 
@@ -99,6 +101,88 @@ class AssetServiceTest : BehaviorSpec({
 
                 verify(exactly = 1) { assetRepository.existsByMarketIdAndSymbol(1L, "AAPL") }
                 verify(exactly = 0) { assetRepository.save(any()) }
+            }
+        }
+    }
+
+    given("사용자가 자산을 조회할 때") {
+
+        `when`("마켓이 존재하면") {
+            then("해당 마켓의 자산 목록을 반환한다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val assetService = AssetService(assetRepository, marketExistenceChecker)
+                val assets = listOf(
+                    Asset(
+                        id = 10L,
+                        marketId = 1L,
+                        symbol = "005930",
+                        name = "Samsung Electronics",
+                        currency = AssetCurrency.KRW,
+                    )
+                )
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findAllByMarketId(1L) } returns assets
+
+                assetService.getAllByMarketId(1L) shouldBe assets
+
+                verify(exactly = 1) { marketExistenceChecker.existsById(1L) }
+                verify(exactly = 1) { assetRepository.findAllByMarketId(1L) }
+            }
+        }
+
+        `when`("존재하는 마켓과 자산 ID를 입력하면") {
+            then("자산을 반환한다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val assetService = AssetService(assetRepository, marketExistenceChecker)
+                val asset = Asset(
+                    id = 10L,
+                    marketId = 1L,
+                    symbol = "005930",
+                    name = "Samsung Electronics",
+                    currency = AssetCurrency.KRW,
+                )
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 10L) } returns asset
+
+                assetService.getByMarketIdAndId(1L, 10L) shouldBe asset
+
+                verify(exactly = 1) { assetRepository.findByMarketIdAndId(1L, 10L) }
+            }
+        }
+
+        `when`("마켓이 존재하지 않으면") {
+            then("마켓 없음 예외를 던지고 자산을 조회하지 않는다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val assetService = AssetService(assetRepository, marketExistenceChecker)
+
+                every { marketExistenceChecker.existsById(999L) } returns false
+
+                shouldThrow<MarketNotFoundException> {
+                    assetService.getAllByMarketId(999L)
+                }
+
+                verify(exactly = 0) { assetRepository.findAllByMarketId(any()) }
+                verify(exactly = 0) { assetRepository.findByMarketIdAndId(any(), any()) }
+            }
+        }
+
+        `when`("자산이 존재하지 않거나 마켓에 속하지 않으면") {
+            then("자산 없음 예외를 던진다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val assetService = AssetService(assetRepository, marketExistenceChecker)
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 999L) } returns null
+
+                shouldThrow<AssetNotFoundException> {
+                    assetService.getByMarketIdAndId(1L, 999L)
+                }
             }
         }
     }
