@@ -1,6 +1,7 @@
 package com.kotlinspring.market.api
 
 import com.kotlinspring.market.domain.MarketAlreadyExistsException
+import com.kotlinspring.market.domain.MarketNotFoundException
 import io.swagger.v3.oas.annotations.media.Schema
 
 import org.springframework.http.HttpStatus
@@ -12,6 +13,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
 class MarketExceptionHandler {
+
+    @ExceptionHandler(MarketNotFoundException::class)
+    fun handleMarketNotFound(exception: MarketNotFoundException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(
+                ErrorResponse(
+                    code = "MARKET_NOT_FOUND",
+                    message = exception.message ?: "Market not found.",
+                )
+            )
+    }
 
     @ExceptionHandler(MarketAlreadyExistsException::class)
     fun handleMarketAlreadyExists(exception: MarketAlreadyExistsException): ResponseEntity<ErrorResponse> {

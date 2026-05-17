@@ -2,7 +2,7 @@ package com.kotlinspring.market.application
 
 import com.kotlinspring.config.TestEmbeddedPostgresConfig
 import com.kotlinspring.market.domain.MarketAlreadyExistsException
-import com.kotlinspring.market.persistence.MarketJpaRepository
+import com.kotlinspring.market.infrastructure.MarketJpaRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -16,10 +16,10 @@ import org.springframework.test.context.ActiveProfiles
 @SpringBootTest
 @Import(TestEmbeddedPostgresConfig::class)
 @ActiveProfiles("test")
-class CreateMarketPersistenceTest : BehaviorSpec() {
+class CreateMarketIntegrationTest : BehaviorSpec() {
 
     @Autowired
-    private lateinit var createMarketUseCase: CreateMarketUseCase
+    private lateinit var marketUseCase: MarketUseCase
 
     @Autowired
     private lateinit var marketJpaRepository: MarketJpaRepository
@@ -35,7 +35,7 @@ class CreateMarketPersistenceTest : BehaviorSpec() {
 
             `when`("유효한 이름과 시간대를 입력하면") {
                 then("마켓 생성 요청을 저장한다") {
-                    createMarketUseCase.create(
+                    marketUseCase.create(
                         CreateMarketCommand(
                             name = "KOSPI",
                             timezone = "Asia/Seoul",
@@ -52,7 +52,7 @@ class CreateMarketPersistenceTest : BehaviorSpec() {
 
             `when`("중복된 마켓 이름을 입력하면") {
                 then("예외를 던진다") {
-                    createMarketUseCase.create(
+                    marketUseCase.create(
                         CreateMarketCommand(
                             name = "NASDAQ",
                             timezone = "America/New_York",
@@ -60,7 +60,7 @@ class CreateMarketPersistenceTest : BehaviorSpec() {
                     )
 
                     shouldThrow<MarketAlreadyExistsException> {
-                        createMarketUseCase.create(
+                        marketUseCase.create(
                             CreateMarketCommand(
                                 name = "NASDAQ",
                                 timezone = "America/Los_Angeles",
