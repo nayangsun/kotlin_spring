@@ -211,7 +211,11 @@ ID 단건 조회
 
 `POST /markets/{marketId}/assets`
 
-### 요청 예시
+`GET /markets/{marketId}/assets`
+
+`GET /markets/{marketId}/assets/{assetId}`
+
+### 생성 요청 예시
 
 ```json
 {
@@ -220,6 +224,16 @@ ID 단건 조회
   "currency": "KRW"
 }
 ```
+
+### 조회 요청 예시
+
+자산 목록 조회
+
+`GET /markets/1/assets`
+
+자산 단건 조회
+
+`GET /markets/1/assets/10`
 
 ### 요구사항
 
@@ -230,6 +244,10 @@ ID 단건 조회
 - 성공 시 `201 Created`를 반환합니다.
 - 존재하지 않는 마켓이면 `404 Not Found`를 반환합니다.
 - 중복된 자산이면 `409 Conflict`를 반환합니다.
+- 목록 조회 시 `200 OK`와 특정 마켓에 속한 자산 목록을 반환합니다.
+- 단건 조회 시 `200 OK`와 자산 정보를 반환합니다.
+- 존재하지 않는 자산이거나 `marketId`와 `assetId`의 관계가 맞지 않으면 `404 Not Found`를 반환합니다.
+- 자산을 생성한 뒤 조회 API를 통해 등록된 내역을 확인할 수 있어야 합니다.
 - 중복 제약은 애플리케이션 레벨과 DB unique index 양쪽에서 처리합니다.
 
 ## Chapter 3. 자산에는 상태가 있다
@@ -438,9 +456,10 @@ ID 단건 조회
 | `ADMIN` | 마켓 생성, 자산 등록, 자산 상태 변경 |
 | `SYSTEM` | 가격 등록 |
 
-## 조회 API
+## 조회 API 확장
 
-기본 조회 API도 제공합니다.
+각 Chapter에서 생성한 리소스를 확인할 수 있는 기본 조회 API를 먼저 제공합니다.
+이후 서비스가 커지면서 목록 조회 조건, 가격 이력 기간 조건, 통계 조회처럼 추가로 필요한 조회 기능을 확장합니다.
 
 ### 마켓 목록 조회
 
@@ -449,6 +468,10 @@ ID 단건 조회
 ### 특정 마켓의 자산 목록 조회
 
 `GET /markets/{marketId}/assets`
+
+### 특정 마켓의 자산 단건 조회
+
+`GET /markets/{marketId}/assets/{assetId}`
 
 ### 특정 자산의 가격 이력 조회
 
@@ -459,6 +482,7 @@ ID 단건 조회
 - 조회 API는 `USER`, `ADMIN`, `SYSTEM` 모두 접근할 수 있습니다.
 - 존재하지 않는 마켓이면 `404 Not Found`를 반환합니다.
 - 존재하지 않는 자산이거나 마켓과 자산의 관계가 맞지 않으면 `404 Not Found`를 반환합니다.
+- 자산 목록 조회는 이후 필요에 따라 `status`, `symbol`, `currency` 같은 검색 조건을 추가할 수 있습니다.
 - 가격 이력 조회는 `from`, `to` 기간 조건을 받을 수 있습니다.
 - `from`, `to`가 모두 주어졌다면 `from`은 `to`보다 이전이어야 합니다.
 - 날짜 조건이 유효하지 않으면 `400 Bad Request`를 반환합니다.
