@@ -2,8 +2,11 @@ package com.kotlinspring.asset.api
 
 import com.kotlinspring.asset.application.AssetUseCase
 import com.kotlinspring.asset.application.CreateAssetCommand
+import com.kotlinspring.asset.domain.Asset
 import com.kotlinspring.asset.domain.AssetAlreadyExistsException
 import com.kotlinspring.asset.domain.AssetCurrency
+import com.kotlinspring.asset.domain.AssetNotFoundException
+import com.kotlinspring.asset.domain.AssetStatus
 import com.kotlinspring.market.domain.MarketNotFoundException
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.every
@@ -12,12 +15,14 @@ import io.mockk.verify
 import org.springframework.http.MediaType
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import tools.jackson.module.kotlin.jsonMapper
+import java.time.OffsetDateTime
 
 class AssetApiTest : BehaviorSpec({
 
@@ -33,6 +38,101 @@ class AssetApiTest : BehaviorSpec({
             .setMessageConverters(JacksonJsonHttpMessageConverter(objectMapper))
             .setValidator(validator)
             .build()
+    }
+
+    given("사용자가 자산 목록을 조회할 때") {
+
+        `when`("등록된 자산이 있으면") {
+            then("자산 목록을 반환한다") {
+                val assetUseCase = mockk<AssetUseCase>()
+                val mockMvc = createMockMvc(assetUseCase)
+                val createdAt = OffsetDateTime.parse("2026-05-12T09:00:00Z")
+
+                every { assetUseCase.getAllByMarketId(1L) } returns listOf(
+                    Asset(
+                        id = 10L,
+                        marketId = 1L,
+                        symbol = "005930",
+                        name = "Samsung Electronics",
+                        status = AssetStatus.ACTIVE,
+                        currency = AssetCurrency.KRW,
+                        createdAt = createdAt,
+                        updatedAt = createdAt,
+                    )
+                )
+
+                mockMvc.perform(get("/markets/1/assets"))
+                    .andExpect(status().isOk)
+                    .andExpect(jsonPath("$[0].id").value(10))
+                    .andExpect(jsonPath("$[0].marketId").value(1))
+                    .andExpect(jsonPath("$[0].symbol").value("005930"))
+                    .andExpect(jsonPath("$[0].status").value("ACTIVE"))
+                    .andExpect(jsonPath("$[0].currency").value("KRW"))
+
+                verify(exactly = 1) {
+                    assetUseCase.getAllByMarketId(1L)
+                }
+            }
+        }
+
+        `when`("존재하지 않는 마켓의 자산 목록을 조회하면") {
+            then("마켓 없음 오류를 받는다") {
+                val assetUseCase = mockk<AssetUseCase>()
+                val mockMvc = createMockMvc(assetUseCase)
+
+                every { assetUseCase.getAllByMarketId(999L) } throws MarketNotFoundException("999")
+
+                mockMvc.perform(get("/markets/999/assets"))
+                    .andExpect(status().isNotFound)
+                    .andExpect(jsonPath("$.code").value("MARKET_NOT_FOUND"))
+            }
+        }
+    }
+
+    given("사용자가 자산을 단건 조회할 때") {
+
+        `when`("존재하는 마켓과 자산 ID를 입력하면") {
+            then("자산 정보를 반환한다") {
+                val assetUseCase = mockk<AssetUseCase>()
+                val mockMvc = createMockMvc(assetUseCase)
+                val createdAt = OffsetDateTime.parse("2026-05-12T09:00:00Z")
+
+                every { assetUseCase.getByMarketIdAndId(1L, 10L) } returns Asset(
+                    id = 10L,
+                    marketId = 1L,
+                    symbol = "005930",
+                    name = "Samsung Electronics",
+                    status = AssetStatus.ACTIVE,
+                    currency = AssetCurrency.KRW,
+                    createdAt = createdAt,
+                    updatedAt = createdAt,
+                )
+
+                mockMvc.perform(get("/markets/1/assets/10"))
+                    .andExpect(status().isOk)
+                    .andExpect(jsonPath("$.id").value(10))
+                    .andExpect(jsonPath("$.marketId").value(1))
+                    .andExpect(jsonPath("$.symbol").value("005930"))
+                    .andExpect(jsonPath("$.name").value("Samsung Electronics"))
+
+                verify(exactly = 1) {
+                    assetUseCase.getByMarketIdAndId(1L, 10L)
+                }
+            }
+        }
+
+        `when`("존재하지 않는 자산을 조회하면") {
+            then("자산 없음 오류를 받는다") {
+                val assetUseCase = mockk<AssetUseCase>()
+                val mockMvc = createMockMvc(assetUseCase)
+
+                every { assetUseCase.getByMarketIdAndId(1L, 999L) } throws AssetNotFoundException(1L, 999L)
+
+                mockMvc.perform(get("/markets/1/assets/999"))
+                    .andExpect(status().isNotFound)
+                    .andExpect(jsonPath("$.code").value("ASSET_NOT_FOUND"))
+            }
+        }
     }
 
     given("관리자가 자산을 등록할 때") {
