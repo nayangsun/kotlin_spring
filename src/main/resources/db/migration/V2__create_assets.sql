@@ -1,0 +1,12 @@
+CREATE TABLE assets (
+    id BIGSERIAL PRIMARY KEY,
+    market_id BIGINT NOT NULL,
+    symbol VARCHAR(50) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    currency VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_assets_market FOREIGN KEY (market_id) REFERENCES markets (id) ON DELETE CASCADE,
+    CONSTRAINT uk_assets_market_symbol UNIQUE (market_id, symbol)
+);

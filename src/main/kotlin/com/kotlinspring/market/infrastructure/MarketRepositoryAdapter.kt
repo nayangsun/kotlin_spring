@@ -15,6 +15,10 @@ class MarketRepositoryAdapter(
         return marketJpaRepository.existsByName(name)
     }
 
+    override fun existsById(id: Long): Boolean {
+        return marketJpaRepository.existsById(id)
+    }
+
     override fun findAll(): List<Market> {
         return marketJpaRepository.findAllByOrderByIdAsc().map { it.toDomain() }
     }
