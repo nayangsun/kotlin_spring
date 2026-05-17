@@ -1,5 +1,6 @@
 package com.kotlinspring.market.api
 
+import com.kotlinspring.common.api.ErrorResponse
 import com.kotlinspring.market.application.CreateMarketCommand
 import com.kotlinspring.market.application.MarketUseCase
 import io.swagger.v3.oas.annotations.Operation
@@ -62,7 +63,7 @@ class MarketController(
                 description = "Market was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = MarketErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
@@ -96,7 +97,7 @@ class MarketController(
                 description = "Market was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = MarketErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"MARKET_NOT_FOUND","message":"Market 'UNKNOWN' was not found."}"""
@@ -126,7 +127,7 @@ class MarketController(
                 description = "Request validation failed.",
                 content = [
                     Content(
-                        schema = Schema(implementation = MarketErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"INVALID_REQUEST","message":"Invalid request."}"""
@@ -140,7 +141,7 @@ class MarketController(
                 description = "A market with the same name already exists.",
                 content = [
                     Content(
-                        schema = Schema(implementation = MarketErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"MARKET_ALREADY_EXISTS","message":""" +

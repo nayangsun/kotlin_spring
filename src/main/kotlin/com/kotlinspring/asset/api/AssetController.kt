@@ -3,6 +3,7 @@ package com.kotlinspring.asset.api
 import com.kotlinspring.asset.application.AssetUseCase
 import com.kotlinspring.asset.application.CreateAssetCommand
 import com.kotlinspring.asset.application.UpdateAssetStatusCommand
+import com.kotlinspring.common.api.ErrorResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
@@ -44,7 +45,7 @@ class AssetController(
                 description = "Market was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = AssetErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
@@ -78,7 +79,7 @@ class AssetController(
                 description = "Market or asset was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = AssetErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 name = "MARKET_NOT_FOUND",
@@ -117,7 +118,7 @@ class AssetController(
                 description = "Request validation failed.",
                 content = [
                     Content(
-                        schema = Schema(implementation = AssetErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"INVALID_REQUEST","message":"Invalid request."}"""
@@ -131,7 +132,7 @@ class AssetController(
                 description = "Market was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = AssetErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
@@ -145,7 +146,7 @@ class AssetController(
                 description = "An asset with the same symbol already exists in the market.",
                 content = [
                     Content(
-                        schema = Schema(implementation = AssetErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"ASSET_ALREADY_EXISTS","message":""" +
@@ -186,7 +187,7 @@ class AssetController(
                 description = "Request validation failed.",
                 content = [
                     Content(
-                        schema = Schema(implementation = AssetErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"INVALID_REQUEST","message":"Invalid request."}"""
@@ -200,7 +201,7 @@ class AssetController(
                 description = "Market or asset was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = AssetErrorResponse::class),
+                        schema = Schema(implementation = ErrorResponse::class),
                         examples = [
                             ExampleObject(
                                 name = "MARKET_NOT_FOUND",
