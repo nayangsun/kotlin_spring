@@ -63,6 +63,10 @@ build/reports/detekt/detekt.xml
 build/reports/detekt/detekt.sarif
 ```
 
+### User Story
+
+도메인 요구사항과 기능 맥락은 [docs/user_story.md](docs/user_story.md)에 정리되어 있습니다.
+
 ### Architecture
 
 현재 패키지 구조와 아키텍처 결정 근거는 [docs/architecture.md](docs/architecture.md)에 정리되어 있습니다.
