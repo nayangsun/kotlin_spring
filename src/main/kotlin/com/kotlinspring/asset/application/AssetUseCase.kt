@@ -8,4 +8,6 @@ interface AssetUseCase {
     fun getAllByMarketId(marketId: Long): List<Asset>
 
     fun getByMarketIdAndId(marketId: Long, assetId: Long): Asset
+
+    fun updateStatus(marketId: Long, assetId: Long, command: UpdateAssetStatusCommand)
 }

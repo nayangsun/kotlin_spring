@@ -17,4 +17,8 @@ data class Asset(
         require(symbol.isNotBlank()) { "Asset symbol must not be blank." }
         require(name.isNotBlank()) { "Asset name must not be blank." }
     }
+
+    fun updateStatus(status: AssetStatus): Asset {
+        return copy(status = status)
+    }
 }

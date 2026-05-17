@@ -2,6 +2,7 @@ package com.kotlinspring.asset.api
 
 import com.kotlinspring.asset.application.AssetUseCase
 import com.kotlinspring.asset.application.CreateAssetCommand
+import com.kotlinspring.asset.application.UpdateAssetStatusCommand
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
@@ -14,6 +15,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -169,5 +171,65 @@ class AssetController(
         )
 
         return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @PatchMapping("/markets/{marketId}/assets/{assetId}/status")
+    @Operation(
+        summary = "Update asset status",
+        description = "Changes the status of an asset registered in a market."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "204", description = "Asset status updated successfully."),
+            ApiResponse(
+                responseCode = "400",
+                description = "Request validation failed.",
+                content = [
+                    Content(
+                        schema = Schema(implementation = AssetErrorResponse::class),
+                        examples = [
+                            ExampleObject(
+                                value = """{"code":"INVALID_REQUEST","message":"Invalid request."}"""
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "Market or asset was not found.",
+                content = [
+                    Content(
+                        schema = Schema(implementation = AssetErrorResponse::class),
+                        examples = [
+                            ExampleObject(
+                                name = "MARKET_NOT_FOUND",
+                                value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
+                            ),
+                            ExampleObject(
+                                name = "ASSET_NOT_FOUND",
+                                value = """{"code":"ASSET_NOT_FOUND","message":""" +
+                                    """"Asset '10' was not found in market '1'."}"""
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+        ]
+    )
+    fun updateAssetStatus(
+        @PathVariable marketId: Long,
+        @PathVariable assetId: Long,
+        @Valid @RequestBody request: UpdateAssetStatusRequest,
+    ): ResponseEntity<Void> {
+        assetUseCase.updateStatus(
+            marketId = marketId,
+            assetId = assetId,
+            command = UpdateAssetStatusCommand(
+                status = requireNotNull(request.status),
+            )
+        )
+
+        return ResponseEntity.noContent().build()
     }
 }
