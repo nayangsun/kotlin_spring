@@ -143,7 +143,8 @@ class MarketController(
                         schema = Schema(implementation = MarketErrorResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"MARKET_ALREADY_EXISTS","message":"Market 'NASDAQ' already exists."}"""
+                                value = """{"code":"MARKET_ALREADY_EXISTS","message":""" +
+                                    """"Market 'NASDAQ' already exists."}"""
                             ),
                         ]
                     ),
