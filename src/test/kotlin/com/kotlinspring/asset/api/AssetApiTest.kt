@@ -2,6 +2,7 @@ package com.kotlinspring.asset.api
 
 import com.kotlinspring.asset.application.AssetUseCase
 import com.kotlinspring.asset.application.CreateAssetCommand
+import com.kotlinspring.asset.application.UpdateAssetStatusCommand
 import com.kotlinspring.asset.domain.Asset
 import com.kotlinspring.asset.domain.AssetAlreadyExistsException
 import com.kotlinspring.asset.domain.AssetCurrency
@@ -16,6 +17,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -238,6 +240,100 @@ class AssetApiTest : BehaviorSpec({
                             }
                             """.trimIndent()
                         )
+                )
+                    .andExpect(status().isBadRequest)
+                    .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+            }
+        }
+    }
+
+    given("관리자가 자산 상태를 변경할 때") {
+
+        `when`("유효한 상태를 입력하면") {
+            then("자산 상태가 변경된다") {
+                val assetUseCase = mockk<AssetUseCase>()
+                val mockMvc = createMockMvc(assetUseCase)
+
+                every { assetUseCase.updateStatus(any(), any(), any()) } returns Unit
+
+                mockMvc.perform(
+                    patch("/markets/1/assets/10/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            """
+                            {
+                              "status": "INACTIVE"
+                            }
+                            """.trimIndent()
+                        )
+                )
+                    .andExpect(status().isNoContent)
+
+                verify(exactly = 1) {
+                    assetUseCase.updateStatus(
+                        marketId = 1L,
+                        assetId = 10L,
+                        command = UpdateAssetStatusCommand(status = AssetStatus.INACTIVE),
+                    )
+                }
+            }
+        }
+
+        `when`("존재하지 않는 마켓의 자산 상태를 변경하면") {
+            then("마켓 없음 오류를 받는다") {
+                val assetUseCase = mockk<AssetUseCase>()
+                val mockMvc = createMockMvc(assetUseCase)
+
+                every { assetUseCase.updateStatus(any(), any(), any()) } throws MarketNotFoundException("999")
+
+                mockMvc.perform(
+                    patch("/markets/999/assets/10/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            """
+                            {
+                              "status": "INACTIVE"
+                            }
+                            """.trimIndent()
+                        )
+                )
+                    .andExpect(status().isNotFound)
+                    .andExpect(jsonPath("$.code").value("MARKET_NOT_FOUND"))
+            }
+        }
+
+        `when`("존재하지 않는 자산의 상태를 변경하면") {
+            then("자산 없음 오류를 받는다") {
+                val assetUseCase = mockk<AssetUseCase>()
+                val mockMvc = createMockMvc(assetUseCase)
+
+                every { assetUseCase.updateStatus(any(), any(), any()) } throws AssetNotFoundException(1L, 999L)
+
+                mockMvc.perform(
+                    patch("/markets/1/assets/999/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            """
+                            {
+                              "status": "DELISTED"
+                            }
+                            """.trimIndent()
+                        )
+                )
+                    .andExpect(status().isNotFound)
+                    .andExpect(jsonPath("$.code").value("ASSET_NOT_FOUND"))
+            }
+        }
+
+        `when`("상태를 입력하지 않으면") {
+            then("잘못된 요청 오류를 받는다") {
+                val assetUseCase = mockk<AssetUseCase>()
+                val mockMvc = createMockMvc(assetUseCase)
+
+                mockMvc.perform(
+                    patch("/markets/1/assets/10/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
                 )
                     .andExpect(status().isBadRequest)
                     .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))

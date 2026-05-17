@@ -186,4 +186,83 @@ class AssetServiceTest : BehaviorSpec({
             }
         }
     }
+
+    given("관리자가 자산 상태를 변경할 때") {
+
+        `when`("마켓과 자산이 존재하면") {
+            then("요청한 상태로 변경해 저장한다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val assetService = AssetService(assetRepository, marketExistenceChecker)
+                val asset = Asset(
+                    id = 10L,
+                    marketId = 1L,
+                    symbol = "005930",
+                    name = "Samsung Electronics",
+                    status = AssetStatus.ACTIVE,
+                    currency = AssetCurrency.KRW,
+                )
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 10L) } returns asset
+                every { assetRepository.save(any()) } answers { firstArg() }
+
+                assetService.updateStatus(
+                    marketId = 1L,
+                    assetId = 10L,
+                    command = UpdateAssetStatusCommand(status = AssetStatus.INACTIVE),
+                )
+
+                verify(exactly = 1) { marketExistenceChecker.existsById(1L) }
+                verify(exactly = 1) { assetRepository.findByMarketIdAndId(1L, 10L) }
+                verify(exactly = 1) {
+                    assetRepository.save(
+                        asset.copy(status = AssetStatus.INACTIVE)
+                    )
+                }
+            }
+        }
+
+        `when`("마켓이 존재하지 않으면") {
+            then("마켓 없음 예외를 던지고 자산을 조회하지 않는다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val assetService = AssetService(assetRepository, marketExistenceChecker)
+
+                every { marketExistenceChecker.existsById(999L) } returns false
+
+                shouldThrow<MarketNotFoundException> {
+                    assetService.updateStatus(
+                        marketId = 999L,
+                        assetId = 10L,
+                        command = UpdateAssetStatusCommand(status = AssetStatus.INACTIVE),
+                    )
+                }
+
+                verify(exactly = 0) { assetRepository.findByMarketIdAndId(any(), any()) }
+                verify(exactly = 0) { assetRepository.save(any()) }
+            }
+        }
+
+        `when`("자산이 존재하지 않거나 마켓에 속하지 않으면") {
+            then("자산 없음 예외를 던지고 저장하지 않는다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val assetService = AssetService(assetRepository, marketExistenceChecker)
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 999L) } returns null
+
+                shouldThrow<AssetNotFoundException> {
+                    assetService.updateStatus(
+                        marketId = 1L,
+                        assetId = 999L,
+                        command = UpdateAssetStatusCommand(status = AssetStatus.DELISTED),
+                    )
+                }
+
+                verify(exactly = 0) { assetRepository.save(any()) }
+            }
+        }
+    }
 })

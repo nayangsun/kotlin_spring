@@ -48,6 +48,16 @@ class AssetService(
             ?: throw AssetNotFoundException(marketId, assetId)
     }
 
+    @Transactional
+    override fun updateStatus(marketId: Long, assetId: Long, command: UpdateAssetStatusCommand) {
+        validateMarketExists(marketId)
+
+        val asset = assetRepository.findByMarketIdAndId(marketId, assetId)
+            ?: throw AssetNotFoundException(marketId, assetId)
+
+        assetRepository.save(asset.updateStatus(command.status))
+    }
+
     private fun validateMarketExists(marketId: Long) {
         if (!marketExistenceChecker.existsById(marketId)) {
             throw MarketNotFoundException(marketId.toString())
