@@ -1,4 +1,4 @@
-package com.kotlinspring.market.persistence
+package com.kotlinspring.market.infrastructure
 
 import com.kotlinspring.market.domain.Market
 import jakarta.persistence.Column
