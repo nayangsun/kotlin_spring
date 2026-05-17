@@ -67,7 +67,8 @@ class AssetController(
                         schema = Schema(implementation = AssetErrorResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"ASSET_ALREADY_EXISTS","message":"Asset 'AAPL' already exists in market '1'."}"""
+                                value = """{"code":"ASSET_ALREADY_EXISTS","message":""" +
+                                    """"Asset 'AAPL' already exists in market '1'."}"""
                             ),
                         ]
                     ),
