@@ -1,6 +1,8 @@
 package com.kotlinspring.market.domain
 
-fun interface MarketExistenceChecker {
+interface MarketExistenceChecker {
+    fun existsById(id: Long): Boolean
+
     fun existsByName(name: String): Boolean
 }
 

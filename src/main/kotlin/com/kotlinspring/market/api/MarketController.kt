@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.ArraySchema
+import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -59,7 +60,16 @@ class MarketController(
             ApiResponse(
                 responseCode = "404",
                 description = "Market was not found.",
-                content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+                content = [
+                    Content(
+                        schema = Schema(implementation = MarketErrorResponse::class),
+                        examples = [
+                            ExampleObject(
+                                value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
+                            ),
+                        ]
+                    ),
+                ]
             ),
         ]
     )
@@ -84,7 +94,16 @@ class MarketController(
             ApiResponse(
                 responseCode = "404",
                 description = "Market was not found.",
-                content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+                content = [
+                    Content(
+                        schema = Schema(implementation = MarketErrorResponse::class),
+                        examples = [
+                            ExampleObject(
+                                value = """{"code":"MARKET_NOT_FOUND","message":"Market 'UNKNOWN' was not found."}"""
+                            ),
+                        ]
+                    ),
+                ]
             ),
         ]
     )
@@ -105,12 +124,30 @@ class MarketController(
             ApiResponse(
                 responseCode = "400",
                 description = "Request validation failed.",
-                content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+                content = [
+                    Content(
+                        schema = Schema(implementation = MarketErrorResponse::class),
+                        examples = [
+                            ExampleObject(
+                                value = """{"code":"INVALID_REQUEST","message":"Invalid request."}"""
+                            ),
+                        ]
+                    ),
+                ]
             ),
             ApiResponse(
                 responseCode = "409",
                 description = "A market with the same name already exists.",
-                content = [Content(schema = Schema(implementation = ErrorResponse::class))]
+                content = [
+                    Content(
+                        schema = Schema(implementation = MarketErrorResponse::class),
+                        examples = [
+                            ExampleObject(
+                                value = """{"code":"MARKET_ALREADY_EXISTS","message":"Market 'NASDAQ' already exists."}"""
+                            ),
+                        ]
+                    ),
+                ]
             ),
         ]
     )
