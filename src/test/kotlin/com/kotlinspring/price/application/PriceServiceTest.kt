@@ -8,11 +8,13 @@ import com.kotlinspring.asset.domain.AssetStatus
 import com.kotlinspring.market.domain.MarketExistenceChecker
 import com.kotlinspring.market.domain.MarketNotFoundException
 import com.kotlinspring.price.domain.InvalidAssetStatusException
+import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
 import com.kotlinspring.price.domain.LatestPrice
 import com.kotlinspring.price.domain.LatestPriceRepository
 import com.kotlinspring.price.domain.PriceHistory
 import com.kotlinspring.price.domain.PriceHistoryRepository
+import com.kotlinspring.price.domain.PriceStatistics
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -208,6 +210,76 @@ class PriceServiceTest : BehaviorSpec({
                         )
                     )
                 }
+            }
+        }
+    }
+
+    given("사용자가 가격 통계를 조회할 때") {
+
+        `when`("마켓과 자산이 존재하고 날짜 범위가 유효하면") {
+            then("DB 집계 결과와 자산 정보를 함께 반환한다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val priceHistoryRepository = mockk<PriceHistoryRepository>()
+                val latestPriceRepository = mockk<LatestPriceRepository>()
+                val priceService = PriceService(
+                    assetRepository,
+                    marketExistenceChecker,
+                    priceHistoryRepository,
+                    latestPriceRepository,
+                )
+                val from = LocalDateTime.parse("2026-05-01T00:00:00")
+                val to = LocalDateTime.parse("2026-05-03T23:59:59")
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 10L) } returns Asset(
+                    id = 10L,
+                    marketId = 1L,
+                    symbol = "005930",
+                    name = "Samsung Electronics",
+                    status = AssetStatus.ACTIVE,
+                    currency = AssetCurrency.KRW,
+                )
+                every { priceHistoryRepository.statistics(10L, from, to) } returns PriceStatistics(
+                    minPrice = BigDecimal("71000.0000"),
+                    maxPrice = BigDecimal("73500.0000"),
+                    averagePrice = BigDecimal("72250.0000"),
+                )
+
+                val result = priceService.statistics(1L, 10L, from, to)
+
+                result.assetId shouldBe 10L
+                result.symbol shouldBe "005930"
+                result.currency shouldBe AssetCurrency.KRW
+                result.minPrice shouldBe BigDecimal("71000.0000")
+                result.maxPrice shouldBe BigDecimal("73500.0000")
+                result.averagePrice shouldBe BigDecimal("72250.0000")
+            }
+        }
+
+        `when`("날짜 범위가 유효하지 않으면") {
+            then("날짜 범위 예외를 던지고 집계하지 않는다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val priceHistoryRepository = mockk<PriceHistoryRepository>()
+                val latestPriceRepository = mockk<LatestPriceRepository>()
+                val priceService = PriceService(
+                    assetRepository,
+                    marketExistenceChecker,
+                    priceHistoryRepository,
+                    latestPriceRepository,
+                )
+                val from = LocalDateTime.parse("2026-05-03T23:59:59")
+                val to = LocalDateTime.parse("2026-05-01T00:00:00")
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+
+                shouldThrow<InvalidDateRangeException> {
+                    priceService.statistics(1L, 10L, from, to)
+                }
+
+                verify(exactly = 0) { assetRepository.findByMarketIdAndId(any(), any()) }
+                verify(exactly = 0) { priceHistoryRepository.statistics(any(), any(), any()) }
             }
         }
     }

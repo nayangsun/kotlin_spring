@@ -4,13 +4,16 @@ import com.kotlinspring.asset.domain.AssetNotFoundException
 import com.kotlinspring.common.api.ErrorResponse
 import com.kotlinspring.market.domain.MarketNotFoundException
 import com.kotlinspring.price.domain.InvalidAssetStatusException
+import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 @RestControllerAdvice(assignableTypes = [PriceController::class])
 class PriceExceptionHandler {
@@ -59,10 +62,23 @@ class PriceExceptionHandler {
             )
     }
 
+    @ExceptionHandler(InvalidDateRangeException::class)
+    fun handleInvalidDateRange(exception: InvalidDateRangeException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(
+                ErrorResponse(
+                    code = "INVALID_DATE_RANGE",
+                    message = exception.message ?: "Invalid date range.",
+                )
+            )
+    }
+
     @ExceptionHandler(
         MethodArgumentNotValidException::class,
         HttpMessageNotReadableException::class,
         IllegalArgumentException::class,
+        MissingServletRequestParameterException::class,
+        MethodArgumentTypeMismatchException::class,
     )
     fun handleInvalidRequest(): ResponseEntity<ErrorResponse> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
