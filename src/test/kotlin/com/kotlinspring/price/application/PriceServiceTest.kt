@@ -12,6 +12,7 @@ import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
 import com.kotlinspring.price.domain.LatestPrice
 import com.kotlinspring.price.domain.LatestPriceRepository
+import com.kotlinspring.price.domain.PriceConcurrencyException
 import com.kotlinspring.price.domain.PriceHistory
 import com.kotlinspring.price.domain.PriceHistoryRepository
 import com.kotlinspring.price.domain.PriceStatistics
@@ -21,6 +22,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -39,7 +41,8 @@ class PriceServiceTest : BehaviorSpec({
                     marketExistenceChecker,
                     priceHistoryRepository,
                     latestPriceRepository,
-                )
+                    ImmediatePriceTransactionRunner,
+                    )
                 val timestamp = LocalDateTime.parse("2026-05-03T10:00:00")
                 val command = CreatePriceCommand(
                     price = BigDecimal("72000"),
@@ -79,7 +82,7 @@ class PriceServiceTest : BehaviorSpec({
                             price = BigDecimal("72000"),
                             timestamp = timestamp,
                             source = "SYSTEM_A",
-                        )
+                    )
                     )
                 }
             }
@@ -96,7 +99,8 @@ class PriceServiceTest : BehaviorSpec({
                     marketExistenceChecker,
                     priceHistoryRepository,
                     latestPriceRepository,
-                )
+                    ImmediatePriceTransactionRunner,
+                    )
 
                 every { marketExistenceChecker.existsById(999L) } returns false
 
@@ -108,7 +112,7 @@ class PriceServiceTest : BehaviorSpec({
                             price = BigDecimal("72000"),
                             timestamp = LocalDateTime.parse("2026-05-03T10:00:00"),
                             source = "SYSTEM_A",
-                        )
+                    )
                     )
                 }
 
@@ -129,7 +133,8 @@ class PriceServiceTest : BehaviorSpec({
                     marketExistenceChecker,
                     priceHistoryRepository,
                     latestPriceRepository,
-                )
+                    ImmediatePriceTransactionRunner,
+                    )
 
                 every { marketExistenceChecker.existsById(1L) } returns true
                 every { assetRepository.findByMarketIdAndId(1L, 999L) } returns null
@@ -142,7 +147,7 @@ class PriceServiceTest : BehaviorSpec({
                             price = BigDecimal("72000"),
                             timestamp = LocalDateTime.parse("2026-05-03T10:00:00"),
                             source = "SYSTEM_A",
-                        )
+                    )
                     )
                 }
             }
@@ -159,7 +164,8 @@ class PriceServiceTest : BehaviorSpec({
                     marketExistenceChecker,
                     priceHistoryRepository,
                     latestPriceRepository,
-                )
+                    ImmediatePriceTransactionRunner,
+                    )
 
                 every { marketExistenceChecker.existsById(1L) } returns true
                 every { assetRepository.findByMarketIdAndId(1L, 10L) } returns Asset(
@@ -179,7 +185,7 @@ class PriceServiceTest : BehaviorSpec({
                             price = BigDecimal("72000"),
                             timestamp = LocalDateTime.parse("2026-05-03T10:00:00"),
                             source = "SYSTEM_A",
-                        )
+                    )
                     )
                 }
 
@@ -197,7 +203,8 @@ class PriceServiceTest : BehaviorSpec({
                     },
                     mockk(),
                     mockk(),
-                )
+                    ImmediatePriceTransactionRunner,
+                    )
 
                 shouldThrow<InvalidPriceException> {
                     priceService.create(
@@ -207,9 +214,101 @@ class PriceServiceTest : BehaviorSpec({
                             price = BigDecimal.ZERO,
                             timestamp = LocalDateTime.parse("2026-05-03T10:00:00"),
                             source = "SYSTEM_A",
-                        )
+                    )
                     )
                 }
+            }
+        }
+
+        `when`("최신 가격 갱신 중 낙관적 락 충돌이 발생한 뒤 다음 시도에서 성공하면") {
+            then("가격 저장을 재시도한다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val priceHistoryRepository = mockk<PriceHistoryRepository>()
+                val latestPriceRepository = mockk<LatestPriceRepository>()
+                val priceService = PriceService(
+                    assetRepository,
+                    marketExistenceChecker,
+                    priceHistoryRepository,
+                    latestPriceRepository,
+                    ImmediatePriceTransactionRunner,
+                    )
+                val timestamp = LocalDateTime.parse("2026-05-03T10:00:00")
+                val command = CreatePriceCommand(
+                    price = BigDecimal("72000"),
+                    timestamp = timestamp,
+                    source = "SYSTEM_A",
+                )
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 10L) } returns Asset(
+                    id = 10L,
+                    marketId = 1L,
+                    symbol = "005930",
+                    name = "Samsung Electronics",
+                    status = AssetStatus.ACTIVE,
+                    currency = AssetCurrency.KRW,
+                )
+                every { priceHistoryRepository.save(any()) } answers { firstArg() }
+                every { latestPriceRepository.findByAssetId(10L) } returns null
+                every { latestPriceRepository.save(any()) } throws ObjectOptimisticLockingFailureException(
+                    LatestPrice::class.java,
+                    10L,
+                ) andThenAnswer {
+                    firstArg()
+                }
+
+                priceService.create(1L, 10L, command)
+
+                verify(exactly = 2) { priceHistoryRepository.save(any()) }
+                verify(exactly = 2) { latestPriceRepository.save(any()) }
+            }
+        }
+
+        `when`("최신 가격 갱신 충돌이 재시도 횟수를 초과하면") {
+            then("동시성 예외를 던진다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val priceHistoryRepository = mockk<PriceHistoryRepository>()
+                val latestPriceRepository = mockk<LatestPriceRepository>()
+                val priceService = PriceService(
+                    assetRepository,
+                    marketExistenceChecker,
+                    priceHistoryRepository,
+                    latestPriceRepository,
+                    ImmediatePriceTransactionRunner,
+                    )
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 10L) } returns Asset(
+                    id = 10L,
+                    marketId = 1L,
+                    symbol = "005930",
+                    name = "Samsung Electronics",
+                    status = AssetStatus.ACTIVE,
+                    currency = AssetCurrency.KRW,
+                )
+                every { priceHistoryRepository.save(any()) } answers { firstArg() }
+                every { latestPriceRepository.findByAssetId(10L) } returns null
+                every { latestPriceRepository.save(any()) } throws ObjectOptimisticLockingFailureException(
+                    LatestPrice::class.java,
+                    10L,
+                )
+
+                shouldThrow<PriceConcurrencyException> {
+                    priceService.create(
+                        marketId = 1L,
+                        assetId = 10L,
+                        command = CreatePriceCommand(
+                            price = BigDecimal("72000"),
+                            timestamp = LocalDateTime.parse("2026-05-03T10:00:00"),
+                            source = "SYSTEM_A",
+                    )
+                    )
+                }
+
+                verify(exactly = 4) { priceHistoryRepository.save(any()) }
+                verify(exactly = 4) { latestPriceRepository.save(any()) }
             }
         }
     }
@@ -227,7 +326,8 @@ class PriceServiceTest : BehaviorSpec({
                     marketExistenceChecker,
                     priceHistoryRepository,
                     latestPriceRepository,
-                )
+                    ImmediatePriceTransactionRunner,
+                    )
                 val from = LocalDateTime.parse("2026-05-01T00:00:00")
                 val to = LocalDateTime.parse("2026-05-03T23:59:59")
 
@@ -268,7 +368,8 @@ class PriceServiceTest : BehaviorSpec({
                     marketExistenceChecker,
                     priceHistoryRepository,
                     latestPriceRepository,
-                )
+                    ImmediatePriceTransactionRunner,
+                    )
                 val from = LocalDateTime.parse("2026-05-03T23:59:59")
                 val to = LocalDateTime.parse("2026-05-01T00:00:00")
 
@@ -284,3 +385,9 @@ class PriceServiceTest : BehaviorSpec({
         }
     }
 })
+
+private object ImmediatePriceTransactionRunner : PriceTransactionRunner {
+    override fun execute(block: () -> Unit) {
+        block()
+    }
+}

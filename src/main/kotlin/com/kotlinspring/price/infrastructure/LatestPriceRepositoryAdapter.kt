@@ -21,10 +21,10 @@ class LatestPriceRepositoryAdapter(
     override fun save(latestPrice: LatestPrice): LatestPrice {
         return try {
             latestPriceJpaRepository.saveAndFlush(LatestPriceJpaEntity.from(latestPrice)).toDomain()
-        } catch (_: ObjectOptimisticLockingFailureException) {
-            throw PriceConcurrencyException()
-        } catch (_: DataIntegrityViolationException) {
-            throw PriceConcurrencyException()
+        } catch (exception: ObjectOptimisticLockingFailureException) {
+            throw PriceConcurrencyException(exception)
+        } catch (exception: DataIntegrityViolationException) {
+            throw PriceConcurrencyException(exception)
         }
     }
 }

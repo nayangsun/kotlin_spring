@@ -1,4 +1,5 @@
 package com.kotlinspring.price.domain
 
-class PriceConcurrencyException :
-    RuntimeException("Price update conflict occurred. Please retry.")
+class PriceConcurrencyException(
+    cause: Throwable? = null,
+) : RuntimeException("Price update conflict occurred. Please retry.", cause)

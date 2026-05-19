@@ -10,8 +10,12 @@ import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
 import com.kotlinspring.price.domain.LatestPrice
 import com.kotlinspring.price.domain.LatestPriceRepository
+import com.kotlinspring.price.domain.PriceConcurrencyException
 import com.kotlinspring.price.domain.PriceHistory
 import com.kotlinspring.price.domain.PriceHistoryRepository
+import jakarta.persistence.OptimisticLockException
+import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -24,10 +28,18 @@ class PriceService(
     private val marketExistenceChecker: MarketExistenceChecker,
     private val priceHistoryRepository: PriceHistoryRepository,
     private val latestPriceRepository: LatestPriceRepository,
+    private val transactionRunner: PriceTransactionRunner,
 ) : PriceUseCase {
 
-    @Transactional
     override fun create(marketId: Long, assetId: Long, command: CreatePriceCommand) {
+        retryOnConcurrency {
+            transactionRunner.execute {
+                createInTransaction(marketId, assetId, command)
+            }
+        }
+    }
+
+    private fun createInTransaction(marketId: Long, assetId: Long, command: CreatePriceCommand) {
         validateMarketExists(marketId)
         validatePrice(command)
 
@@ -108,5 +120,48 @@ class PriceService(
         if (!from.isBefore(to)) {
             throw InvalidDateRangeException()
         }
+    }
+
+    private fun retryOnConcurrency(block: () -> Unit) {
+        var retryCount = 0
+
+        while (true) {
+            try {
+                block()
+                return
+            } catch (exception: ObjectOptimisticLockingFailureException) {
+                retryCount = retryOrThrow(retryCount, exception)
+            } catch (exception: OptimisticLockException) {
+                retryCount = retryOrThrow(retryCount, exception)
+            } catch (exception: DataIntegrityViolationException) {
+                retryCount = retryOrThrow(retryCount, exception)
+            } catch (exception: PriceConcurrencyException) {
+                retryCount = retryOrThrow(retryCount, exception)
+            }
+        }
+    }
+
+    private fun retryOrThrow(retryCount: Int, cause: Throwable): Int {
+        if (retryCount >= MAX_CONCURRENCY_RETRIES) {
+            throw PriceConcurrencyException(cause)
+        }
+
+        sleepBeforeRetry(retryCount, cause)
+        return retryCount + 1
+    }
+
+    private fun sleepBeforeRetry(retryCount: Int, cause: Throwable) {
+        try {
+            Thread.sleep(CONCURRENCY_RETRY_BACKOFF_MILLIS[retryCount])
+        } catch (exception: InterruptedException) {
+            Thread.currentThread().interrupt()
+            cause.addSuppressed(exception)
+            throw PriceConcurrencyException(cause)
+        }
+    }
+
+    private companion object {
+        const val MAX_CONCURRENCY_RETRIES = 3
+        val CONCURRENCY_RETRY_BACKOFF_MILLIS = longArrayOf(100, 200, 400)
     }
 }

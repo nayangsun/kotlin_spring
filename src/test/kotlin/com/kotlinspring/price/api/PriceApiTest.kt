@@ -207,14 +207,14 @@ class PriceApiTest : BehaviorSpec({
             }
         }
 
-        `when`("최신 가격 갱신 중 충돌이 발생하면") {
+        `when`("최신 가격 갱신 충돌이 해소되지 않으면") {
             then("동시성 오류를 반환한다") {
                 val priceUseCase = mockk<PriceUseCase>()
                 val mockMvc = createMockMvc(priceUseCase)
 
                 every {
                     priceUseCase.create(any(), any(), any())
-                } throws PriceConcurrencyException()
+                } throws PriceConcurrencyException(IllegalStateException("conflict"))
 
                 mockMvc.perform(
                     post("/markets/1/assets/10/prices")
