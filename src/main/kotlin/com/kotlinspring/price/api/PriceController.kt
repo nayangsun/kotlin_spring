@@ -13,10 +13,13 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDateTime
 
 @RestController
 @Tag(name = "Prices", description = "Asset price APIs")
@@ -78,5 +81,26 @@ class PriceController(
         )
 
         return ResponseEntity.status(HttpStatus.CREATED).build()
+    }
+
+    @GetMapping("/markets/{marketId}/assets/{assetId}/prices/statistics")
+    @Operation(
+        summary = "Get price statistics",
+        description = "Returns min, max, and average price for an asset in the requested timestamp range."
+    )
+    fun statistics(
+        @PathVariable marketId: Long,
+        @PathVariable assetId: Long,
+        @RequestParam from: LocalDateTime,
+        @RequestParam to: LocalDateTime,
+    ): PriceStatisticsResponse {
+        return PriceStatisticsResponse.from(
+            priceUseCase.statistics(
+                marketId = marketId,
+                assetId = assetId,
+                from = from,
+                to = to,
+            )
+        )
     }
 }

@@ -6,6 +6,7 @@ import com.kotlinspring.asset.domain.AssetStatus
 import com.kotlinspring.market.domain.MarketExistenceChecker
 import com.kotlinspring.market.domain.MarketNotFoundException
 import com.kotlinspring.price.domain.InvalidAssetStatusException
+import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
 import com.kotlinspring.price.domain.LatestPrice
 import com.kotlinspring.price.domain.LatestPriceRepository
@@ -14,6 +15,7 @@ import com.kotlinspring.price.domain.PriceHistoryRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 @Service
@@ -64,6 +66,28 @@ class PriceService(
         latestPriceRepository.save(latestPrice)
     }
 
+    @Transactional(readOnly = true)
+    override fun statistics(
+        marketId: Long,
+        assetId: Long,
+        from: LocalDateTime,
+        to: LocalDateTime,
+    ): PriceStatisticsResult {
+        validateMarketExists(marketId)
+        validateDateRange(from, to)
+
+        val asset = assetRepository.findByMarketIdAndId(marketId, assetId)
+            ?: throw AssetNotFoundException(marketId, assetId)
+        val statistics = priceHistoryRepository.statistics(assetId, from, to)
+
+        return PriceStatisticsResult.from(
+            assetId = requireNotNull(asset.id),
+            symbol = asset.symbol,
+            currency = asset.currency,
+            statistics = statistics,
+        )
+    }
+
     private fun validateMarketExists(marketId: Long) {
         if (!marketExistenceChecker.existsById(marketId)) {
             throw MarketNotFoundException(marketId.toString())
@@ -77,6 +101,12 @@ class PriceService(
 
         if (command.source.isBlank()) {
             throw IllegalArgumentException("Price source must not be blank.")
+        }
+    }
+
+    private fun validateDateRange(from: LocalDateTime, to: LocalDateTime) {
+        if (!from.isBefore(to)) {
+            throw InvalidDateRangeException()
         }
     }
 }

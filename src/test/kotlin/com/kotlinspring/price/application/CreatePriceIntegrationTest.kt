@@ -137,5 +137,92 @@ class CreatePriceIntegrationTest : BehaviorSpec() {
                 }
             }
         }
+
+        given("사용자가 가격 통계를 조회할 때") {
+
+            `when`("기간 내 가격 이력이 있으면") {
+                then("DB 집계 결과를 반환한다") {
+                    val market = marketJpaRepository.save(
+                        MarketJpaEntity(
+                            name = "KOSPI",
+                            timezone = "Asia/Seoul",
+                        )
+                    )
+                    val asset = assetJpaRepository.save(
+                        AssetJpaEntity(
+                            marketId = market.id!!,
+                            symbol = "005930",
+                            name = "Samsung Electronics",
+                            status = AssetStatus.ACTIVE,
+                            currency = AssetCurrency.KRW,
+                        )
+                    )
+
+                    listOf(
+                        "2026-05-01T10:00:00" to BigDecimal("71000"),
+                        "2026-05-02T10:00:00" to BigDecimal("73500"),
+                        "2026-05-03T10:00:00" to BigDecimal("72250"),
+                    ).forEach { (timestamp, price) ->
+                        priceUseCase.create(
+                            marketId = market.id!!,
+                            assetId = asset.id!!,
+                            command = CreatePriceCommand(
+                                price = price,
+                                timestamp = LocalDateTime.parse(timestamp),
+                                source = "SYSTEM_A",
+                            )
+                        )
+                    }
+
+                    val result = priceUseCase.statistics(
+                        marketId = market.id!!,
+                        assetId = asset.id!!,
+                        from = LocalDateTime.parse("2026-05-01T00:00:00"),
+                        to = LocalDateTime.parse("2026-05-03T23:59:59"),
+                    )
+
+                    result.assetId shouldBe asset.id
+                    result.symbol shouldBe "005930"
+                    result.currency shouldBe AssetCurrency.KRW
+                    result.minPrice shouldBe BigDecimal("71000.0000")
+                    result.maxPrice shouldBe BigDecimal("73500.0000")
+                    result.averagePrice shouldBe BigDecimal("72250.0000")
+                }
+            }
+
+            `when`("기간 내 가격 이력이 없으면") {
+                then("집계 값을 null로 반환한다") {
+                    val market = marketJpaRepository.save(
+                        MarketJpaEntity(
+                            name = "NASDAQ",
+                            timezone = "America/New_York",
+                        )
+                    )
+                    val asset = assetJpaRepository.save(
+                        AssetJpaEntity(
+                            marketId = market.id!!,
+                            symbol = "AAPL",
+                            name = "Apple",
+                            status = AssetStatus.ACTIVE,
+                            currency = AssetCurrency.USD,
+                        )
+                    )
+
+                    val result = priceUseCase.statistics(
+                        marketId = market.id!!,
+                        assetId = asset.id!!,
+                        from = LocalDateTime.parse("2026-05-01T00:00:00"),
+                        to = LocalDateTime.parse("2026-05-03T23:59:59"),
+                    )
+
+                    result.assetId shouldBe asset.id
+                    result.symbol shouldBe "AAPL"
+                    result.currency shouldBe AssetCurrency.USD
+                    result.minPrice shouldBe null
+                    result.maxPrice shouldBe null
+                    result.averagePrice shouldBe null
+                }
+            }
+        }
     }
 }
