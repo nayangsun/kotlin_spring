@@ -135,6 +135,8 @@ class PriceService(
                 retryCount = retryOrThrow(retryCount, exception)
             } catch (exception: DataIntegrityViolationException) {
                 retryCount = retryOrThrow(retryCount, exception)
+            } catch (exception: PriceConcurrencyException) {
+                retryCount = retryOrThrow(retryCount, exception)
             }
         }
     }
