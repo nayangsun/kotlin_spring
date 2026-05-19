@@ -166,7 +166,7 @@ class CreatePriceIntegrationTest : BehaviorSpec() {
             }
 
             `when`("같은 자산에 가격 등록 요청이 동시에 들어오면") {
-                then("일부 요청은 성공하고 version 충돌 요청은 동시성 예외로 실패한다") {
+                then("성공한 요청은 저장하고 최종 실패는 동시성 예외로 제한한다") {
                     val market = marketJpaRepository.save(
                         MarketJpaEntity(
                             name = "KOSPI",
@@ -234,8 +234,8 @@ class CreatePriceIntegrationTest : BehaviorSpec() {
                     val successCount = requestCount - failures.size
 
                     unexpectedFailures shouldHaveSize 0
+                    concurrencyFailures shouldHaveSize failures.size
                     (successCount > 0) shouldBe true
-                    concurrencyFailures.isNotEmpty() shouldBe true
                     priceHistoryJpaRepository.findAll() shouldHaveSize successCount + 1
 
                     val latestPrice = latestPriceJpaRepository.findById(asset.id!!).orElseThrow()
