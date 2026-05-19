@@ -8,6 +8,8 @@ import com.kotlinspring.config.TestEmbeddedPostgresConfig
 import com.kotlinspring.market.infrastructure.MarketJpaEntity
 import com.kotlinspring.market.infrastructure.MarketJpaRepository
 import com.kotlinspring.price.domain.InvalidAssetStatusException
+import com.kotlinspring.price.domain.LatestPriceRepository
+import com.kotlinspring.price.domain.PriceConcurrencyException
 import com.kotlinspring.price.infrastructure.LatestPriceJpaRepository
 import com.kotlinspring.price.infrastructure.PriceHistoryJpaRepository
 import io.kotest.assertions.throwables.shouldThrow
@@ -36,6 +38,9 @@ class CreatePriceIntegrationTest : BehaviorSpec() {
 
     @Autowired
     private lateinit var latestPriceJpaRepository: LatestPriceJpaRepository
+
+    @Autowired
+    private lateinit var latestPriceRepository: LatestPriceRepository
 
     @Autowired
     private lateinit var assetJpaRepository: AssetJpaRepository
@@ -99,6 +104,61 @@ class CreatePriceIntegrationTest : BehaviorSpec() {
                     latestPrice.timestamp shouldBe timestamp
                     latestPrice.source shouldBe "SYSTEM_A"
                     latestPrice.version shouldBe 0L
+                }
+            }
+
+            `when`("같은 최신 가격 row를 오래된 version으로 갱신하면") {
+                then("동시성 예외를 던진다") {
+                    val market = marketJpaRepository.save(
+                        MarketJpaEntity(
+                            name = "KOSPI",
+                            timezone = "Asia/Seoul",
+                        )
+                    )
+                    val asset = assetJpaRepository.save(
+                        AssetJpaEntity(
+                            marketId = market.id!!,
+                            symbol = "005930",
+                            name = "Samsung Electronics",
+                            status = AssetStatus.ACTIVE,
+                            currency = AssetCurrency.KRW,
+                        )
+                    )
+
+                    priceUseCase.create(
+                        marketId = market.id!!,
+                        assetId = asset.id!!,
+                        command = CreatePriceCommand(
+                            price = BigDecimal("72000"),
+                            timestamp = LocalDateTime.parse("2026-05-03T10:00:00"),
+                            source = "SYSTEM_A",
+                        )
+                    )
+                    val staleLatestPrice = latestPriceRepository.findByAssetId(asset.id!!)!!
+
+                    priceUseCase.create(
+                        marketId = market.id!!,
+                        assetId = asset.id!!,
+                        command = CreatePriceCommand(
+                            price = BigDecimal("72100"),
+                            timestamp = LocalDateTime.parse("2026-05-03T10:00:01"),
+                            source = "SYSTEM_B",
+                        )
+                    )
+
+                    shouldThrow<PriceConcurrencyException> {
+                        latestPriceRepository.save(
+                            staleLatestPrice.update(
+                                price = BigDecimal("71900"),
+                                timestamp = LocalDateTime.parse("2026-05-03T10:00:02"),
+                                source = "SYSTEM_C",
+                            )
+                        )
+                    }
+
+                    val latestPrice = latestPriceJpaRepository.findById(asset.id!!).orElseThrow()
+                    latestPrice.price shouldBe BigDecimal("72100.0000")
+                    latestPrice.version shouldBe 1L
                 }
             }
 

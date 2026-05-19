@@ -6,6 +6,7 @@ import com.kotlinspring.market.domain.MarketNotFoundException
 import com.kotlinspring.price.domain.InvalidAssetStatusException
 import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
+import com.kotlinspring.price.domain.PriceConcurrencyException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -69,6 +70,17 @@ class PriceExceptionHandler {
                 ErrorResponse(
                     code = "INVALID_DATE_RANGE",
                     message = exception.message ?: "Invalid date range.",
+                )
+            )
+    }
+
+    @ExceptionHandler(PriceConcurrencyException::class)
+    fun handlePriceConcurrency(exception: PriceConcurrencyException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(
+                ErrorResponse(
+                    code = "CONCURRENCY_ERROR",
+                    message = exception.message ?: "Price update conflict occurred. Please retry.",
                 )
             )
     }

@@ -10,6 +10,7 @@ import com.kotlinspring.price.application.PriceUseCase
 import com.kotlinspring.price.domain.InvalidAssetStatusException
 import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
+import com.kotlinspring.price.domain.PriceConcurrencyException
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.every
 import io.mockk.mockk
@@ -203,6 +204,34 @@ class PriceApiTest : BehaviorSpec({
                 )
                     .andExpect(status().isBadRequest)
                     .andExpect(jsonPath("$.code").value("INVALID_ASSET_STATUS"))
+            }
+        }
+
+        `when`("최신 가격 갱신 중 충돌이 발생하면") {
+            then("동시성 오류를 반환한다") {
+                val priceUseCase = mockk<PriceUseCase>()
+                val mockMvc = createMockMvc(priceUseCase)
+
+                every {
+                    priceUseCase.create(any(), any(), any())
+                } throws PriceConcurrencyException()
+
+                mockMvc.perform(
+                    post("/markets/1/assets/10/prices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            """
+                            {
+                              "price": 72000,
+                              "timestamp": "2026-05-03T10:00:00",
+                              "source": "SYSTEM_A"
+                            }
+                            """.trimIndent()
+                        )
+                )
+                    .andExpect(status().isConflict)
+                    .andExpect(jsonPath("$.code").value("CONCURRENCY_ERROR"))
+                    .andExpect(jsonPath("$.message").value("Price update conflict occurred. Please retry."))
             }
         }
     }
