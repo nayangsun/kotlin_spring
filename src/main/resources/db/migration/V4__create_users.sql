@@ -1,0 +1,15 @@
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_users_username UNIQUE (username)
+);
+
+CREATE TABLE user_roles (
+    user_id BIGINT NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    CONSTRAINT pk_user_roles PRIMARY KEY (user_id, role),
+    CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
