@@ -8,13 +8,7 @@
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
-### Security
-
-API는 세션 쿠키 인증과 CSRF 보호를 사용합니다.
-세션 쿠키는 `HttpOnly`, `SameSite=Lax`로 설정합니다.
-운영 환경에서는 HTTPS 뒤에서 `Secure` 속성을 함께 사용하는 것을 전제로 합니다.
-
-개발용 계정:
+### User
 
 개발용 기본 계정은 `dev` 프로필에서 Flyway seed로 생성됩니다.
 
@@ -24,35 +18,9 @@ API는 세션 쿠키 인증과 CSRF 보호를 사용합니다.
 | `admin@example.com` | `Password1!` | `ADMIN` |
 | `system@example.com` | `Password1!` | `SYSTEM` |
 
-권한 정책:
-
 - `USER`, `ADMIN`, `SYSTEM`: 마켓 조회, 자산 조회, 가격 통계 조회
 - `ADMIN`: 마켓 생성, 자산 등록, 자산 상태 변경
 - `SYSTEM`: 가격 등록
-
-Swagger UI에서는 `JSESSIONID` 세션 쿠키와 `XSRF-TOKEN` 쿠키를 기준으로 `X-XSRF-TOKEN` 헤더를 자동 전송합니다.
-`Authorize`에는 CSRF 토큰을 수동으로 넣지 않고, 로그인 또는 로그아웃 후에는 `/auth/csrf`를 다시 호출해 새 토큰을 발급받습니다.
-
-예시:
-
-```bash
-curl -c cookies.txt http://localhost:8080/auth/csrf
-curl -b cookies.txt -H 'Content-Type: application/json' \
-  -H 'X-XSRF-TOKEN: <csrf-token>' \
-  -d '{"username":"new-user@example.com","password":"Password1!"}' \
-  http://localhost:8080/auth/register
-curl -b cookies.txt -c cookies.txt \
-  -H 'Content-Type: application/json' \
-  -H 'X-XSRF-TOKEN: <csrf-token>' \
-  -d '{"username":"admin@example.com","password":"Password1!"}' \
-  http://localhost:8080/auth/login
-curl -b cookies.txt -c cookies.txt http://localhost:8080/auth/csrf
-curl -b cookies.txt http://localhost:8080/markets
-curl -b cookies.txt -H 'Content-Type: application/json' \
-  -H 'X-XSRF-TOKEN: <new-csrf-token>' \
-  -d '{"name":"KOSPI","timezone":"Asia/Seoul"}' \
-  http://localhost:8080/markets
-```
 
 ### Database Scripts
 
@@ -114,6 +82,10 @@ build/reports/detekt/detekt.md
 build/reports/detekt/detekt.xml
 build/reports/detekt/detekt.sarif
 ```
+
+### Security
+
+인증, CSRF, 개발용 계정, 권한 정책은 [docs/security.md](docs/security.md)에 정리되어 있습니다.
 
 ### User Story
 
