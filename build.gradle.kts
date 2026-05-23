@@ -27,6 +27,7 @@ dependencies {
 	implementation(libs.spring.boot.starter.actuator)
 	implementation(libs.spring.boot.starter.data.jpa)
 	implementation(libs.spring.boot.starter.flyway)
+	implementation(libs.spring.boot.starter.security)
 	implementation(libs.spring.boot.starter.validation)
 	runtimeOnly(libs.flyway.database.postgresql)
 	implementation(libs.spring.boot.starter.webmvc)
@@ -45,6 +46,8 @@ dependencies {
 	testImplementation(libs.embedded.postgres.binaries.linux.arm64)
 
 	testImplementation(libs.spring.boot.starter.test)
+	testImplementation(libs.spring.boot.starter.webmvc.test)
+	testImplementation(libs.spring.security.test)
 	testImplementation(libs.kotlin.test.junit5)
 	testImplementation(libs.kotest.runner.junit5)
 	testImplementation(libs.kotest.assertions.core)
