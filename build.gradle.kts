@@ -36,7 +36,7 @@ dependencies {
 	runtimeOnly(libs.postgresql)
 
 	// Development helpers
-	developmentOnly(libs.spring.boot.starter.test)
+	developmentOnly(libs.spring.boot.devtools)
 
 	// Test-only dependencies
 	testImplementation(libs.embedded.postgres)
