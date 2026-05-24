@@ -19,6 +19,10 @@ data class LatestPrice(
     }
 
     fun update(price: BigDecimal, timestamp: LocalDateTime, source: String): LatestPrice {
+        if (!timestamp.isAfter(this.timestamp)) {
+            return this
+        }
+
         return copy(
             price = price,
             timestamp = timestamp,

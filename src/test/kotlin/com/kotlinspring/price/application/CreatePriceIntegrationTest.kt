@@ -110,6 +110,54 @@ class CreatePriceIntegrationTest : BehaviorSpec() {
                 }
             }
 
+            `when`("기존 최신 가격보다 오래된 가격이 늦게 들어오면") {
+                then("가격 이력은 저장하지만 최신 가격은 과거 가격으로 덮지 않는다") {
+                    val market = marketJpaRepository.save(
+                        MarketJpaEntity(
+                            name = "KOSPI",
+                            timezone = "Asia/Seoul",
+                        )
+                    )
+                    val asset = assetJpaRepository.save(
+                        AssetJpaEntity(
+                            marketId = market.id!!,
+                            symbol = "005930",
+                            name = "Samsung Electronics",
+                            status = AssetStatus.ACTIVE,
+                            currency = AssetCurrency.KRW,
+                        )
+                    )
+
+                    priceUseCase.create(
+                        marketId = market.id!!,
+                        assetId = asset.id!!,
+                        command = CreatePriceCommand(
+                            price = BigDecimal("72000"),
+                            timestamp = LocalDateTime.parse("2026-05-03T10:00:00"),
+                            source = "SYSTEM_A",
+                        )
+                    )
+                    priceUseCase.create(
+                        marketId = market.id!!,
+                        assetId = asset.id!!,
+                        command = CreatePriceCommand(
+                            price = BigDecimal("71900"),
+                            timestamp = LocalDateTime.parse("2026-05-03T09:59:00"),
+                            source = "SYSTEM_B",
+                        )
+                    )
+
+                    val histories = priceHistoryJpaRepository.findAll()
+                    val latestPrice = latestPriceJpaRepository.findById(asset.id!!).orElseThrow()
+
+                    histories shouldHaveSize 2
+                    latestPrice.price shouldBe BigDecimal("72000.0000")
+                    latestPrice.timestamp shouldBe LocalDateTime.parse("2026-05-03T10:00:00")
+                    latestPrice.source shouldBe "SYSTEM_A"
+                    latestPrice.version shouldBe 0L
+                }
+            }
+
             `when`("같은 최신 가격 row를 오래된 version으로 갱신하면") {
                 then("동시성 예외를 던진다") {
                     val market = marketJpaRepository.save(
@@ -236,10 +284,14 @@ class CreatePriceIntegrationTest : BehaviorSpec() {
                     unexpectedFailures shouldHaveSize 0
                     concurrencyFailures shouldHaveSize failures.size
                     (successCount > 0) shouldBe true
-                    priceHistoryJpaRepository.findAll() shouldHaveSize successCount + 1
+                    val histories = priceHistoryJpaRepository.findAll()
+                    histories shouldHaveSize successCount + 1
 
                     val latestPrice = latestPriceJpaRepository.findById(asset.id!!).orElseThrow()
-                    latestPrice.version shouldBe successCount.toLong()
+                    val latestHistory = histories.maxBy { it.timestamp }
+                    latestPrice.price shouldBe latestHistory.price
+                    latestPrice.timestamp shouldBe latestHistory.timestamp
+                    latestPrice.source shouldBe latestHistory.source
                 }
             }
 

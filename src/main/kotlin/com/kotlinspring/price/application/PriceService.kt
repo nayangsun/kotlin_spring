@@ -62,7 +62,8 @@ class PriceService(
             )
         )
 
-        val latestPrice = latestPriceRepository.findByAssetId(assetId)
+        val currentLatestPrice = latestPriceRepository.findByAssetId(assetId)
+        val latestPrice = currentLatestPrice
             ?.update(
                 price = command.price,
                 timestamp = command.timestamp,
@@ -75,7 +76,9 @@ class PriceService(
                 source = command.source,
             )
 
-        latestPriceRepository.save(latestPrice)
+        if (latestPrice != currentLatestPrice) {
+            latestPriceRepository.save(latestPrice)
+        }
     }
 
     @Transactional(readOnly = true)

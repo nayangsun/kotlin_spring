@@ -88,6 +88,51 @@ class PriceServiceTest : BehaviorSpec({
             }
         }
 
+        `when`("기존 최신 가격보다 오래된 가격이 늦게 들어오면") {
+            then("가격 이력만 저장하고 최신 가격은 갱신하지 않는다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val priceHistoryRepository = mockk<PriceHistoryRepository>()
+                val latestPriceRepository = mockk<LatestPriceRepository>()
+                val priceService = PriceService(
+                    assetRepository,
+                    marketExistenceChecker,
+                    priceHistoryRepository,
+                    latestPriceRepository,
+                    ImmediatePriceTransactionRunner,
+                    )
+                val oldTimestamp = LocalDateTime.parse("2026-05-03T09:59:00")
+                val latestTimestamp = LocalDateTime.parse("2026-05-03T10:00:00")
+                val command = CreatePriceCommand(
+                    price = BigDecimal("71900"),
+                    timestamp = oldTimestamp,
+                    source = "SYSTEM_B",
+                )
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 10L) } returns Asset(
+                    id = 10L,
+                    marketId = 1L,
+                    symbol = "005930",
+                    name = "Samsung Electronics",
+                    status = AssetStatus.ACTIVE,
+                    currency = AssetCurrency.KRW,
+                )
+                every { priceHistoryRepository.save(any()) } answers { firstArg() }
+                every { latestPriceRepository.findByAssetId(10L) } returns LatestPrice(
+                    assetId = 10L,
+                    price = BigDecimal("72000"),
+                    timestamp = latestTimestamp,
+                    source = "SYSTEM_A",
+                )
+
+                priceService.create(1L, 10L, command)
+
+                verify(exactly = 1) { priceHistoryRepository.save(any()) }
+                verify(exactly = 0) { latestPriceRepository.save(any()) }
+            }
+        }
+
         `when`("마켓이 존재하지 않으면") {
             then("마켓 없음 예외를 던지고 저장하지 않는다") {
                 val assetRepository = mockk<AssetRepository>()
