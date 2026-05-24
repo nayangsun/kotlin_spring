@@ -1,14 +1,14 @@
 package com.kotlinspring.market.api
 
 import com.kotlinspring.market.domain.Market
-import java.time.OffsetDateTime
+import java.time.Instant
 
 data class MarketResponse(
     val id: Long,
     val name: String,
     val timezone: String,
-    val createdAt: OffsetDateTime,
-    val updatedAt: OffsetDateTime,
+    val createdAt: Instant,
+    val updatedAt: Instant,
 ) {
     companion object {
         fun from(market: Market): MarketResponse {

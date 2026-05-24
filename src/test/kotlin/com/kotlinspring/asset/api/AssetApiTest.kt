@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import tools.jackson.module.kotlin.jsonMapper
-import java.time.OffsetDateTime
+import java.time.Instant
 
 class AssetApiTest : BehaviorSpec({
 
@@ -48,7 +48,7 @@ class AssetApiTest : BehaviorSpec({
             then("자산 목록을 반환한다") {
                 val assetUseCase = mockk<AssetUseCase>()
                 val mockMvc = createMockMvc(assetUseCase)
-                val createdAt = OffsetDateTime.parse("2026-05-12T09:00:00Z")
+                val createdAt = Instant.parse("2026-05-12T09:00:00Z")
 
                 every { assetUseCase.getAllByMarketId(1L) } returns listOf(
                     Asset(
@@ -97,7 +97,7 @@ class AssetApiTest : BehaviorSpec({
             then("자산 정보를 반환한다") {
                 val assetUseCase = mockk<AssetUseCase>()
                 val mockMvc = createMockMvc(assetUseCase)
-                val createdAt = OffsetDateTime.parse("2026-05-12T09:00:00Z")
+                val createdAt = Instant.parse("2026-05-12T09:00:00Z")
 
                 every { assetUseCase.getByMarketIdAndId(1L, 10L) } returns Asset(
                     id = 10L,

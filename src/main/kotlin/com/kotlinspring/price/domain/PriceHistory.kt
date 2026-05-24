@@ -1,8 +1,8 @@
 package com.kotlinspring.price.domain
 
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 data class PriceHistory(
     val id: Long? = null,
@@ -10,9 +10,9 @@ data class PriceHistory(
     val price: BigDecimal,
     val timestamp: LocalDateTime,
     val source: String,
-    val receivedAt: OffsetDateTime,
-    val createdAt: OffsetDateTime? = null,
-    val updatedAt: OffsetDateTime? = null,
+    val receivedAt: Instant,
+    val createdAt: Instant? = null,
+    val updatedAt: Instant? = null,
 ) {
     init {
         require(assetId > 0) { "Price history asset id must be positive." }

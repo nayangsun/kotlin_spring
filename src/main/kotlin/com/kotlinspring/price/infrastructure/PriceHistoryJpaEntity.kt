@@ -3,17 +3,20 @@ package com.kotlinspring.price.infrastructure
 import com.kotlinspring.price.domain.PriceHistory
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.PrePersist
-import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 @Entity
+@EntityListeners(AuditingEntityListener::class)
 @Table(name = "price_histories")
 class PriceHistoryJpaEntity(
     @Id
@@ -33,26 +36,16 @@ class PriceHistoryJpaEntity(
     var source: String = "",
 
     @Column(name = "received_at", nullable = false)
-    var receivedAt: OffsetDateTime? = null,
+    var receivedAt: Instant = Instant.now(),
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    var createdAt: OffsetDateTime? = null,
+    var createdAt: Instant = Instant.now(),
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: OffsetDateTime? = null,
+    var updatedAt: Instant = Instant.now(),
 ) {
-
-    @PrePersist
-    fun prePersist() {
-        val now = OffsetDateTime.now()
-        createdAt = now
-        updatedAt = now
-    }
-
-    @PreUpdate
-    fun preUpdate() {
-        updatedAt = OffsetDateTime.now()
-    }
 
     fun toDomain(): PriceHistory {
         return PriceHistory(
@@ -61,7 +54,7 @@ class PriceHistoryJpaEntity(
             price = price,
             timestamp = timestamp,
             source = source,
-            receivedAt = requireNotNull(receivedAt),
+            receivedAt = receivedAt,
             createdAt = createdAt,
             updatedAt = updatedAt,
         )
@@ -69,6 +62,7 @@ class PriceHistoryJpaEntity(
 
     companion object {
         fun from(priceHistory: PriceHistory): PriceHistoryJpaEntity {
+            val now = Instant.now()
             return PriceHistoryJpaEntity(
                 id = priceHistory.id,
                 assetId = priceHistory.assetId,
@@ -76,8 +70,8 @@ class PriceHistoryJpaEntity(
                 timestamp = priceHistory.timestamp,
                 source = priceHistory.source,
                 receivedAt = priceHistory.receivedAt,
-                createdAt = priceHistory.createdAt,
-                updatedAt = priceHistory.updatedAt,
+                createdAt = priceHistory.createdAt ?: now,
+                updatedAt = priceHistory.updatedAt ?: now,
             )
         }
     }

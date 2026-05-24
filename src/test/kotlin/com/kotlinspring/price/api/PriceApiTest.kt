@@ -29,8 +29,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import tools.jackson.module.kotlin.jsonMapper
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 class PriceApiTest : BehaviorSpec({
 
@@ -245,7 +245,7 @@ class PriceApiTest : BehaviorSpec({
             then("기간 내 가격 이력을 반환한다") {
                 val priceUseCase = mockk<PriceUseCase>()
                 val mockMvc = createMockMvc(priceUseCase)
-                val receivedAt = OffsetDateTime.parse("2026-05-03T10:00:03+09:00")
+                val receivedAt = Instant.parse("2026-05-03T01:00:03Z")
 
                 every {
                     priceUseCase.histories(any(), any(), any(), any())
