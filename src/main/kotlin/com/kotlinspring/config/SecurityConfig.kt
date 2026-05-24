@@ -1,8 +1,10 @@
 package com.kotlinspring.config
 
+import com.kotlinspring.common.api.ErrorResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType
@@ -31,12 +33,16 @@ import org.springframework.util.StringUtils
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import tools.jackson.databind.ObjectMapper
 import java.util.function.Supplier
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableMethodSecurity
-class SecurityConfig {
+class SecurityConfig(
+    @Qualifier("jacksonJsonMapper")
+    private val objectMapper: ObjectMapper,
+) {
 
     @Bean
     fun securityFilterChain(
@@ -163,7 +169,7 @@ class SecurityConfig {
         response.status = status
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = Charsets.UTF_8.name()
-        response.writer.write("""{"code":"$code","message":"$message"}""")
+        objectMapper.writeValue(response.writer, ErrorResponse(code = code, message = message))
     }
 
     private class SpaCsrfTokenRequestHandler : CsrfTokenRequestHandler {
