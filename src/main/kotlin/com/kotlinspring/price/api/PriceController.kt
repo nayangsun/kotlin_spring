@@ -1,13 +1,13 @@
 package com.kotlinspring.price.api
 
-import com.kotlinspring.common.api.ErrorResponse
+import com.kotlinspring.common.api.ApiResponse
 import com.kotlinspring.price.application.CreatePriceCommand
 import com.kotlinspring.price.application.PriceUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponse as OpenApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -36,33 +36,34 @@ class PriceController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "201", description = "Price history created successfully."),
-            ApiResponse(
+            OpenApiResponse(responseCode = "201", description = "Price history created successfully."),
+            OpenApiResponse(
                 responseCode = "400",
                 description = "Request or price is invalid.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
                                 name = "INVALID_PRICE",
-                                value = """{"code":"INVALID_PRICE","message":"Price must be greater than zero."}"""
+                                value = """{"code":"INVALID_PRICE","message":""" +
+                                    """"Price must be greater than zero.","data":null}"""
                             ),
                             ExampleObject(
                                 name = "INVALID_ASSET_STATUS",
                                 value =
                                     """{"code":"INVALID_ASSET_STATUS","message":"Price can be registered only """ +
-                                        """for ACTIVE assets."}"""
+                                        """for ACTIVE assets.","data":null}"""
                             ),
                         ]
                     ),
                 ]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "404",
                 description = "Market or asset was not found.",
                 content = [
-                    Content(schema = Schema(implementation = ErrorResponse::class)),
+                    Content(schema = Schema(implementation = ApiResponse::class)),
                 ]
             ),
         ]
@@ -71,7 +72,7 @@ class PriceController(
         @PathVariable marketId: Long,
         @PathVariable assetId: Long,
         @Valid @RequestBody request: CreatePriceRequest,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<ApiResponse<Nothing>> {
         priceUseCase.create(
             marketId = marketId,
             assetId = assetId,
@@ -82,7 +83,8 @@ class PriceController(
             )
         )
 
-        return ResponseEntity.status(HttpStatus.CREATED).build()
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(message = "Price history created successfully."))
     }
 
     @GetMapping("/markets/{marketId}/assets/{assetId}/prices")
@@ -96,13 +98,15 @@ class PriceController(
         @PathVariable assetId: Long,
         @RequestParam from: LocalDateTime,
         @RequestParam to: LocalDateTime,
-    ): PriceHistoriesResponse {
-        return PriceHistoriesResponse.from(
-            priceUseCase.histories(
-                marketId = marketId,
-                assetId = assetId,
-                from = from,
-                to = to,
+    ): ApiResponse<PriceHistoriesResponse> {
+        return ApiResponse.success(
+            PriceHistoriesResponse.from(
+                priceUseCase.histories(
+                    marketId = marketId,
+                    assetId = assetId,
+                    from = from,
+                    to = to,
+                )
             )
         )
     }
@@ -118,13 +122,15 @@ class PriceController(
         @PathVariable assetId: Long,
         @RequestParam from: LocalDateTime,
         @RequestParam to: LocalDateTime,
-    ): PriceStatisticsResponse {
-        return PriceStatisticsResponse.from(
-            priceUseCase.statistics(
-                marketId = marketId,
-                assetId = assetId,
-                from = from,
-                to = to,
+    ): ApiResponse<PriceStatisticsResponse> {
+        return ApiResponse.success(
+            PriceStatisticsResponse.from(
+                priceUseCase.statistics(
+                    marketId = marketId,
+                    assetId = assetId,
+                    from = from,
+                    to = to,
+                )
             )
         )
     }

@@ -44,8 +44,8 @@ class SecurityIntegrationTest : BehaviorSpec() {
                 then("토큰 정보를 반환한다") {
                     mockMvc.perform(get("/auth/csrf"))
                         .andExpect(status().isOk)
-                        .andExpect(jsonPath("$.headerName").value("X-XSRF-TOKEN"))
-                        .andExpect(jsonPath("$.token").isNotEmpty())
+                        .andExpect(jsonPath("$.data.headerName").value("X-XSRF-TOKEN"))
+                        .andExpect(jsonPath("$.data.token").isNotEmpty())
                 }
             }
 
@@ -58,8 +58,8 @@ class SecurityIntegrationTest : BehaviorSpec() {
                             .content("""{"username":"admin@example.com","password":"Password1!"}""")
                     )
                         .andExpect(status().isOk)
-                        .andExpect(jsonPath("$.username").value("admin@example.com"))
-                        .andExpect(jsonPath("$.roles[0]").value("ADMIN"))
+                        .andExpect(jsonPath("$.data.username").value("admin@example.com"))
+                        .andExpect(jsonPath("$.data.roles[0]").value("ADMIN"))
                 }
             }
 
@@ -72,8 +72,8 @@ class SecurityIntegrationTest : BehaviorSpec() {
                             .content("""{"username":"new-user@example.com","password":"Password1!"}""")
                     )
                         .andExpect(status().isCreated)
-                        .andExpect(jsonPath("$.username").value("new-user@example.com"))
-                        .andExpect(jsonPath("$.roles[0]").value("USER"))
+                        .andExpect(jsonPath("$.data.username").value("new-user@example.com"))
+                        .andExpect(jsonPath("$.data.roles[0]").value("USER"))
                 }
             }
 

@@ -297,13 +297,13 @@ class PriceApiTest : BehaviorSpec({
                         .param("to", "2026-05-03T23:59:59")
                 )
                     .andExpect(status().isOk)
-                    .andExpect(jsonPath("$.assetId").value(10))
-                    .andExpect(jsonPath("$.symbol").value("005930"))
-                    .andExpect(jsonPath("$.currency").value("KRW"))
-                    .andExpect(jsonPath("$.prices[0].id").value(1))
-                    .andExpect(jsonPath("$.prices[0].price").value(71000.0000))
-                    .andExpect(jsonPath("$.prices[0].timestamp").value("2026-05-01T10:00:00"))
-                    .andExpect(jsonPath("$.prices[0].source").value("SYSTEM_A"))
+                    .andExpect(jsonPath("$.data.assetId").value(10))
+                    .andExpect(jsonPath("$.data.symbol").value("005930"))
+                    .andExpect(jsonPath("$.data.currency").value("KRW"))
+                    .andExpect(jsonPath("$.data.prices[0].id").value(1))
+                    .andExpect(jsonPath("$.data.prices[0].price").value(71000.0000))
+                    .andExpect(jsonPath("$.data.prices[0].timestamp").value("2026-05-01T10:00:00"))
+                    .andExpect(jsonPath("$.data.prices[0].source").value("SYSTEM_A"))
 
                 verify(exactly = 1) {
                     priceUseCase.histories(
@@ -374,12 +374,12 @@ class PriceApiTest : BehaviorSpec({
                         .param("to", "2026-05-03T23:59:59")
                 )
                     .andExpect(status().isOk)
-                    .andExpect(jsonPath("$.assetId").value(10))
-                    .andExpect(jsonPath("$.symbol").value("005930"))
-                    .andExpect(jsonPath("$.currency").value("KRW"))
-                    .andExpect(jsonPath("$.minPrice").value(71000.0000))
-                    .andExpect(jsonPath("$.maxPrice").value(73500.0000))
-                    .andExpect(jsonPath("$.averagePrice").value(72250.0000))
+                    .andExpect(jsonPath("$.data.assetId").value(10))
+                    .andExpect(jsonPath("$.data.symbol").value("005930"))
+                    .andExpect(jsonPath("$.data.currency").value("KRW"))
+                    .andExpect(jsonPath("$.data.minPrice").value(71000.0000))
+                    .andExpect(jsonPath("$.data.maxPrice").value(73500.0000))
+                    .andExpect(jsonPath("$.data.averagePrice").value(72250.0000))
 
                 verify(exactly = 1) {
                     priceUseCase.statistics(
@@ -414,9 +414,9 @@ class PriceApiTest : BehaviorSpec({
                         .param("to", "2026-05-03T23:59:59")
                 )
                     .andExpect(status().isOk)
-                    .andExpect(jsonPath("$.minPrice").value(nullValue()))
-                    .andExpect(jsonPath("$.maxPrice").value(nullValue()))
-                    .andExpect(jsonPath("$.averagePrice").value(nullValue()))
+                    .andExpect(jsonPath("$.data.minPrice").value(nullValue()))
+                    .andExpect(jsonPath("$.data.maxPrice").value(nullValue()))
+                    .andExpect(jsonPath("$.data.averagePrice").value(nullValue()))
             }
         }
 
