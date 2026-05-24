@@ -1,4 +1,4 @@
-package com.kotlinspring.price.application
+package com.kotlinspring.price
 
 import com.kotlinspring.asset.domain.AssetCurrency
 import com.kotlinspring.asset.domain.AssetStatus
@@ -7,6 +7,8 @@ import com.kotlinspring.asset.infrastructure.AssetJpaRepository
 import com.kotlinspring.config.TestEmbeddedPostgresConfig
 import com.kotlinspring.market.infrastructure.MarketJpaEntity
 import com.kotlinspring.market.infrastructure.MarketJpaRepository
+import com.kotlinspring.price.application.CreatePriceCommand
+import com.kotlinspring.price.application.PriceUseCase
 import com.kotlinspring.price.domain.InvalidAssetStatusException
 import com.kotlinspring.price.domain.LatestPriceRepository
 import com.kotlinspring.price.domain.PriceConcurrencyException
@@ -31,7 +33,7 @@ import java.util.concurrent.TimeUnit
 @SpringBootTest
 @Import(TestEmbeddedPostgresConfig::class)
 @ActiveProfiles("test")
-class CreatePriceIntegrationTest : BehaviorSpec() {
+class PriceIntegrationTest : BehaviorSpec() {
 
     @Autowired
     private lateinit var priceUseCase: PriceUseCase

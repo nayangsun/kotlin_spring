@@ -1,11 +1,15 @@
-package com.kotlinspring.market.application
+package com.kotlinspring.market
 
 import com.kotlinspring.config.TestEmbeddedPostgresConfig
+import com.kotlinspring.market.application.CreateMarketCommand
+import com.kotlinspring.market.application.MarketUseCase
+import com.kotlinspring.market.domain.MarketAlreadyExistsException
 import com.kotlinspring.market.domain.MarketNotFoundException
 import com.kotlinspring.market.infrastructure.MarketJpaRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -15,7 +19,7 @@ import org.springframework.test.context.ActiveProfiles
 @SpringBootTest
 @Import(TestEmbeddedPostgresConfig::class)
 @ActiveProfiles("test")
-class GetMarketIntegrationTest : BehaviorSpec() {
+class MarketIntegrationTest : BehaviorSpec() {
 
     @Autowired
     private lateinit var marketUseCase: MarketUseCase
@@ -28,6 +32,46 @@ class GetMarketIntegrationTest : BehaviorSpec() {
 
         beforeTest {
             marketJpaRepository.deleteAll()
+        }
+
+        given("관리자가 마켓을 생성할 때") {
+
+            `when`("유효한 이름과 시간대를 입력하면") {
+                then("마켓 생성 요청을 저장한다") {
+                    marketUseCase.create(
+                        CreateMarketCommand(
+                            name = "KOSPI",
+                            timezone = "Asia/Seoul",
+                        )
+                    )
+
+                    val markets = marketJpaRepository.findAll()
+
+                    markets shouldHaveSize 1
+                    markets.single().name shouldBe "KOSPI"
+                    markets.single().timezone shouldBe "Asia/Seoul"
+                }
+            }
+
+            `when`("중복된 마켓 이름을 입력하면") {
+                then("예외를 던진다") {
+                    marketUseCase.create(
+                        CreateMarketCommand(
+                            name = "NASDAQ",
+                            timezone = "America/New_York",
+                        )
+                    )
+
+                    shouldThrow<MarketAlreadyExistsException> {
+                        marketUseCase.create(
+                            CreateMarketCommand(
+                                name = "NASDAQ",
+                                timezone = "America/Los_Angeles",
+                            )
+                        )
+                    }
+                }
+            }
         }
 
         given("사용자가 마켓을 조회할 때") {
