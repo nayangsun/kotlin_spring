@@ -33,7 +33,7 @@
         "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
         "vscjava.vscode-java-pack",
-        "fwcd.kotlin",
+        "JetBrains.kotlin-server",
         "vmware.vscode-boot-dev-pack",
         "GabrielBB.vscode-lombok"
       ]
