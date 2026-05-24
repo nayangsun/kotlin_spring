@@ -22,6 +22,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -354,6 +355,51 @@ class PriceServiceTest : BehaviorSpec({
 
                 verify(exactly = 4) { priceHistoryRepository.save(any()) }
                 verify(exactly = 4) { latestPriceRepository.save(any()) }
+            }
+        }
+
+        `when`("가격 이력 저장 중 데이터 무결성 오류가 발생하면") {
+            then("동시성 예외로 바꾸거나 재시도하지 않는다") {
+                val assetRepository = mockk<AssetRepository>()
+                val marketExistenceChecker = mockk<MarketExistenceChecker>()
+                val priceHistoryRepository = mockk<PriceHistoryRepository>()
+                val latestPriceRepository = mockk<LatestPriceRepository>()
+                val priceService = PriceService(
+                    assetRepository,
+                    marketExistenceChecker,
+                    priceHistoryRepository,
+                    latestPriceRepository,
+                    ImmediatePriceTransactionRunner,
+                    )
+                val dataIntegrityViolationException = DataIntegrityViolationException("invalid price history")
+
+                every { marketExistenceChecker.existsById(1L) } returns true
+                every { assetRepository.findByMarketIdAndId(1L, 10L) } returns Asset(
+                    id = 10L,
+                    marketId = 1L,
+                    symbol = "005930",
+                    name = "Samsung Electronics",
+                    status = AssetStatus.ACTIVE,
+                    currency = AssetCurrency.KRW,
+                )
+                every { priceHistoryRepository.save(any()) } throws dataIntegrityViolationException
+
+                val thrown = shouldThrow<DataIntegrityViolationException> {
+                    priceService.create(
+                        marketId = 1L,
+                        assetId = 10L,
+                        command = CreatePriceCommand(
+                            price = BigDecimal("72000"),
+                            timestamp = LocalDateTime.parse("2026-05-03T10:00:00"),
+                            source = "SYSTEM_A",
+                        )
+                    )
+                }
+
+                thrown shouldBe dataIntegrityViolationException
+                verify(exactly = 1) { priceHistoryRepository.save(any()) }
+                verify(exactly = 0) { latestPriceRepository.findByAssetId(any()) }
+                verify(exactly = 0) { latestPriceRepository.save(any()) }
             }
         }
     }

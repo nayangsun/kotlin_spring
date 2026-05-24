@@ -32,7 +32,7 @@ class PriceHistoryJpaEntity(
     @Column(nullable = false)
     var timestamp: LocalDateTime = LocalDateTime.MIN,
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     var source: String = "",
 
     @Column(name = "received_at", nullable = false)

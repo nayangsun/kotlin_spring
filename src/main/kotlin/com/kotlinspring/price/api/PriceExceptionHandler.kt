@@ -7,6 +7,7 @@ import com.kotlinspring.price.domain.InvalidAssetStatusException
 import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
 import com.kotlinspring.price.domain.PriceConcurrencyException
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
@@ -91,6 +92,7 @@ class PriceExceptionHandler {
         IllegalArgumentException::class,
         MissingServletRequestParameterException::class,
         MethodArgumentTypeMismatchException::class,
+        DataIntegrityViolationException::class,
     )
     fun handleInvalidRequest(): ResponseEntity<ErrorResponse> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

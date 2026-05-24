@@ -133,6 +133,32 @@ class PriceApiTest : BehaviorSpec({
             }
         }
 
+        `when`("source가 100자를 초과하면") {
+            then("잘못된 요청 오류를 반환한다") {
+                val priceUseCase = mockk<PriceUseCase>()
+                val mockMvc = createMockMvc(priceUseCase)
+                val longSource = "A".repeat(101)
+
+                mockMvc.perform(
+                    post("/markets/1/assets/10/prices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            """
+                            {
+                              "price": 72000,
+                              "timestamp": "2026-05-03T10:00:00",
+                              "source": "$longSource"
+                            }
+                            """.trimIndent()
+                        )
+                )
+                    .andExpect(status().isBadRequest)
+                    .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+
+                verify(exactly = 0) { priceUseCase.create(any(), any(), any()) }
+            }
+        }
+
         `when`("마켓이 존재하지 않으면") {
             then("마켓 없음 오류를 반환한다") {
                 val priceUseCase = mockk<PriceUseCase>()
