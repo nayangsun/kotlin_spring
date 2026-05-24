@@ -65,11 +65,11 @@ class AssetApiTest : BehaviorSpec({
 
                 mockMvc.perform(get("/markets/1/assets"))
                     .andExpect(status().isOk)
-                    .andExpect(jsonPath("$[0].id").value(10))
-                    .andExpect(jsonPath("$[0].marketId").value(1))
-                    .andExpect(jsonPath("$[0].symbol").value("005930"))
-                    .andExpect(jsonPath("$[0].status").value("ACTIVE"))
-                    .andExpect(jsonPath("$[0].currency").value("KRW"))
+                    .andExpect(jsonPath("$.data[0].id").value(10))
+                    .andExpect(jsonPath("$.data[0].marketId").value(1))
+                    .andExpect(jsonPath("$.data[0].symbol").value("005930"))
+                    .andExpect(jsonPath("$.data[0].status").value("ACTIVE"))
+                    .andExpect(jsonPath("$.data[0].currency").value("KRW"))
 
                 verify(exactly = 1) {
                     assetUseCase.getAllByMarketId(1L)
@@ -112,10 +112,10 @@ class AssetApiTest : BehaviorSpec({
 
                 mockMvc.perform(get("/markets/1/assets/10"))
                     .andExpect(status().isOk)
-                    .andExpect(jsonPath("$.id").value(10))
-                    .andExpect(jsonPath("$.marketId").value(1))
-                    .andExpect(jsonPath("$.symbol").value("005930"))
-                    .andExpect(jsonPath("$.name").value("Samsung Electronics"))
+                    .andExpect(jsonPath("$.data.id").value(10))
+                    .andExpect(jsonPath("$.data.marketId").value(1))
+                    .andExpect(jsonPath("$.data.symbol").value("005930"))
+                    .andExpect(jsonPath("$.data.name").value("Samsung Electronics"))
 
                 verify(exactly = 1) {
                     assetUseCase.getByMarketIdAndId(1L, 10L)

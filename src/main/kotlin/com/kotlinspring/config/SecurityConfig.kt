@@ -1,6 +1,6 @@
 package com.kotlinspring.config
 
-import com.kotlinspring.common.api.ErrorResponse
+import com.kotlinspring.common.api.ApiResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
@@ -169,7 +169,10 @@ class SecurityConfig(
         response.status = status
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = Charsets.UTF_8.name()
-        objectMapper.writeValue(response.writer, ErrorResponse(code = code, message = message))
+        objectMapper.writeValue(
+            response.writer,
+            ApiResponse.error(code = code, message = message)
+        )
     }
 
     private class SpaCsrfTokenRequestHandler : CsrfTokenRequestHandler {

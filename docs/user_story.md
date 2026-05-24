@@ -493,16 +493,79 @@ ID 단건 조회
 - `from`, `to`가 모두 주어졌다면 `from`은 `to`보다 이전이어야 합니다.
 - 날짜 조건이 유효하지 않으면 `400 Bad Request`를 반환합니다.
 
-## 에러 응답 형식
+## Bonus Chapter 1. 공통 응답 포맷을 맞춘다
 
-모든 에러는 아래 형식을 따릅니다.
+기능이 늘어나면 응답 구조를 일관되게 관리해야 합니다.
+
+프론트엔드와 외부 연동 클라이언트가 매번 다른 응답 형태를 분기하지 않도록, 바디가 있는 API 응답은 공통 envelope인 `ApiResponse<T>`로 감싸서 반환합니다.
+
+다만 HTTP status가 이미 성공/실패를 표현하므로 `success` 필드는 두지 않습니다.
+
+### 성공 응답 형식
+
+실제 payload는 `data` 필드에 담습니다.
+
+```json
+{
+  "code": "SUCCESS",
+  "message": "Request processed successfully.",
+  "data": {
+    "id": 1,
+    "name": "KOSPI",
+    "timezone": "Asia/Seoul"
+  }
+}
+```
+
+목록 조회도 동일하게 `data`에 배열을 담습니다.
+
+```json
+{
+  "code": "SUCCESS",
+  "message": "Request processed successfully.",
+  "data": [
+    {
+      "id": 1,
+      "name": "KOSPI",
+      "timezone": "Asia/Seoul"
+    }
+  ]
+}
+```
+
+생성 API처럼 별도 payload가 없는 성공 응답은 `data`를 `null`로 둡니다.
+
+```json
+{
+  "code": "SUCCESS",
+  "message": "Market created successfully.",
+  "data": null
+}
+```
+
+단, `204 No Content` 응답은 HTTP 의미상 바디를 반환하지 않습니다.
+
+### 실패 응답 형식
+
+실패 응답도 같은 envelope를 사용합니다.
 
 ```json
 {
   "code": "ASSET_NOT_FOUND",
-  "message": "Asset not found."
+  "message": "Asset not found.",
+  "data": null
 }
 ```
+
+### 요구사항
+
+- 바디가 있는 성공 응답은 `ApiResponse<T>`를 사용합니다.
+- 바디가 있는 실패 응답은 `ApiResponse<Nothing>`을 사용합니다.
+- 실제 payload는 항상 `data` 필드에 담습니다.
+- `success` 필드는 두지 않습니다.
+- `code`는 클라이언트가 분기할 수 있는 안정적인 코드입니다.
+- `message`는 사람이 읽을 수 있는 설명입니다.
+- `204 No Content` 응답은 바디를 반환하지 않습니다.
 
 ## 에러 코드
 

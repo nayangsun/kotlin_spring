@@ -1,6 +1,6 @@
 package com.kotlinspring.market.api
 
-import com.kotlinspring.common.api.ErrorResponse
+import com.kotlinspring.common.api.ApiResponse
 import com.kotlinspring.market.domain.MarketAlreadyExistsException
 import com.kotlinspring.market.domain.MarketNotFoundException
 import org.springframework.http.HttpStatus
@@ -14,21 +14,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 class MarketExceptionHandler {
 
     @ExceptionHandler(MarketNotFoundException::class)
-    fun handleMarketNotFound(exception: MarketNotFoundException): ResponseEntity<ErrorResponse> {
+    fun handleMarketNotFound(exception: MarketNotFoundException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(
-                ErrorResponse(
-                    code = "MARKET_NOT_FOUND",
-                    message = exception.message ?: "Market not found.",
-                )
+                ApiResponse.error(code = "MARKET_NOT_FOUND", message = exception.message ?: "Market not found.")
             )
     }
 
     @ExceptionHandler(MarketAlreadyExistsException::class)
-    fun handleMarketAlreadyExists(exception: MarketAlreadyExistsException): ResponseEntity<ErrorResponse> {
+    fun handleMarketAlreadyExists(exception: MarketAlreadyExistsException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(
-                ErrorResponse(
+                ApiResponse.error(
                     code = "MARKET_ALREADY_EXISTS",
                     message = exception.message ?: "Market already exists.",
                 )
@@ -36,13 +33,10 @@ class MarketExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class, HttpMessageNotReadableException::class)
-    fun handleInvalidRequest(): ResponseEntity<ErrorResponse> {
+    fun handleInvalidRequest(): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(
-                ErrorResponse(
-                    code = "INVALID_REQUEST",
-                    message = "Invalid request.",
-                )
+                ApiResponse.error(code = "INVALID_REQUEST", message = "Invalid request.")
             )
     }
 }

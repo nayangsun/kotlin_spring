@@ -3,13 +3,12 @@ package com.kotlinspring.asset.api
 import com.kotlinspring.asset.application.AssetUseCase
 import com.kotlinspring.asset.application.CreateAssetCommand
 import com.kotlinspring.asset.application.UpdateAssetStatusCommand
-import com.kotlinspring.common.api.ErrorResponse
+import com.kotlinspring.common.api.ApiResponse
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponse as OpenApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -37,20 +36,21 @@ class AssetController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "200",
                 description = "Assets retrieved successfully.",
-                content = [Content(array = ArraySchema(schema = Schema(implementation = AssetResponse::class)))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "404",
                 description = "Market was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
+                                value = """{"code":"MARKET_NOT_FOUND","message":""" +
+                                    """"Market '999' was not found.","data":null}"""
                             ),
                         ]
                     ),
@@ -58,10 +58,10 @@ class AssetController(
             ),
         ]
     )
-    fun getAssets(@PathVariable marketId: Long): ResponseEntity<List<AssetResponse>> {
+    fun getAssets(@PathVariable marketId: Long): ResponseEntity<ApiResponse<List<AssetResponse>>> {
         val response = assetUseCase.getAllByMarketId(marketId).map(AssetResponse::from)
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(ApiResponse.success(response))
     }
 
     @GetMapping("/markets/{marketId}/assets/{assetId}")
@@ -72,26 +72,27 @@ class AssetController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "200",
                 description = "Asset retrieved successfully.",
-                content = [Content(schema = Schema(implementation = AssetResponse::class))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "404",
                 description = "Market or asset was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
                                 name = "MARKET_NOT_FOUND",
-                                value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
+                                value = """{"code":"MARKET_NOT_FOUND","message":""" +
+                                    """"Market '999' was not found.","data":null}"""
                             ),
                             ExampleObject(
                                 name = "ASSET_NOT_FOUND",
                                 value = """{"code":"ASSET_NOT_FOUND","message":""" +
-                                    """"Asset '10' was not found in market '1'."}"""
+                                    """"Asset '10' was not found in market '1'.","data":null}"""
                             ),
                         ]
                     ),
@@ -102,10 +103,10 @@ class AssetController(
     fun getAsset(
         @PathVariable marketId: Long,
         @PathVariable assetId: Long,
-    ): ResponseEntity<AssetResponse> {
+    ): ResponseEntity<ApiResponse<AssetResponse>> {
         val response = AssetResponse.from(assetUseCase.getByMarketIdAndId(marketId, assetId))
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(ApiResponse.success(response))
     }
 
     @PostMapping("/markets/{marketId}/assets")
@@ -116,45 +117,46 @@ class AssetController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "201", description = "Asset created successfully."),
-            ApiResponse(
+            OpenApiResponse(responseCode = "201", description = "Asset created successfully."),
+            OpenApiResponse(
                 responseCode = "400",
                 description = "Request validation failed.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"INVALID_REQUEST","message":"Invalid request."}"""
+                                value = """{"code":"INVALID_REQUEST","message":"Invalid request.","data":null}"""
                             ),
                         ]
                     ),
                 ]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "404",
                 description = "Market was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
+                                value = """{"code":"MARKET_NOT_FOUND","message":""" +
+                                    """"Market '999' was not found.","data":null}"""
                             ),
                         ]
                     ),
                 ]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "409",
                 description = "An asset with the same symbol already exists in the market.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"ASSET_ALREADY_EXISTS","message":""" +
-                                    """"Asset 'AAPL' already exists in market '1'."}"""
+                                    """"Asset 'AAPL' already exists in market '1'.","data":null}"""
                             ),
                         ]
                     ),
@@ -165,7 +167,7 @@ class AssetController(
     fun createAsset(
         @PathVariable marketId: Long,
         @Valid @RequestBody request: CreateAssetRequest,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<ApiResponse<Nothing>> {
         assetUseCase.create(
             marketId = marketId,
             command = CreateAssetCommand(
@@ -175,7 +177,8 @@ class AssetController(
             )
         )
 
-        return ResponseEntity.status(HttpStatus.CREATED).build()
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(message = "Asset created successfully."))
     }
 
     @PatchMapping("/markets/{marketId}/assets/{assetId}/status")
@@ -186,36 +189,37 @@ class AssetController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "204", description = "Asset status updated successfully."),
-            ApiResponse(
+            OpenApiResponse(responseCode = "204", description = "Asset status updated successfully."),
+            OpenApiResponse(
                 responseCode = "400",
                 description = "Request validation failed.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"INVALID_REQUEST","message":"Invalid request."}"""
+                                value = """{"code":"INVALID_REQUEST","message":"Invalid request.","data":null}"""
                             ),
                         ]
                     ),
                 ]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "404",
                 description = "Market or asset was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
                                 name = "MARKET_NOT_FOUND",
-                                value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
+                                value = """{"code":"MARKET_NOT_FOUND","message":""" +
+                                    """"Market '999' was not found.","data":null}"""
                             ),
                             ExampleObject(
                                 name = "ASSET_NOT_FOUND",
                                 value = """{"code":"ASSET_NOT_FOUND","message":""" +
-                                    """"Asset '10' was not found in market '1'."}"""
+                                    """"Asset '10' was not found in market '1'.","data":null}"""
                             ),
                         ]
                     ),

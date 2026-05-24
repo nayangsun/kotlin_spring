@@ -1,7 +1,7 @@
 package com.kotlinspring.price.api
 
 import com.kotlinspring.asset.domain.AssetNotFoundException
-import com.kotlinspring.common.api.ErrorResponse
+import com.kotlinspring.common.api.ApiResponse
 import com.kotlinspring.market.domain.MarketNotFoundException
 import com.kotlinspring.price.domain.InvalidAssetStatusException
 import com.kotlinspring.price.domain.InvalidDateRangeException
@@ -21,65 +21,50 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 class PriceExceptionHandler {
 
     @ExceptionHandler(MarketNotFoundException::class)
-    fun handleMarketNotFound(exception: MarketNotFoundException): ResponseEntity<ErrorResponse> {
+    fun handleMarketNotFound(exception: MarketNotFoundException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(
-                ErrorResponse(
-                    code = "MARKET_NOT_FOUND",
-                    message = exception.message ?: "Market not found.",
-                )
+                ApiResponse.error(code = "MARKET_NOT_FOUND", message = exception.message ?: "Market not found.")
             )
     }
 
     @ExceptionHandler(AssetNotFoundException::class)
-    fun handleAssetNotFound(exception: AssetNotFoundException): ResponseEntity<ErrorResponse> {
+    fun handleAssetNotFound(exception: AssetNotFoundException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(
-                ErrorResponse(
-                    code = "ASSET_NOT_FOUND",
-                    message = exception.message ?: "Asset not found.",
-                )
+                ApiResponse.error(code = "ASSET_NOT_FOUND", message = exception.message ?: "Asset not found.")
             )
     }
 
     @ExceptionHandler(InvalidPriceException::class)
-    fun handleInvalidPrice(exception: InvalidPriceException): ResponseEntity<ErrorResponse> {
+    fun handleInvalidPrice(exception: InvalidPriceException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(
-                ErrorResponse(
-                    code = "INVALID_PRICE",
-                    message = exception.message ?: "Invalid price.",
-                )
+                ApiResponse.error(code = "INVALID_PRICE", message = exception.message ?: "Invalid price.")
             )
     }
 
     @ExceptionHandler(InvalidAssetStatusException::class)
-    fun handleInvalidAssetStatus(exception: InvalidAssetStatusException): ResponseEntity<ErrorResponse> {
+    fun handleInvalidAssetStatus(exception: InvalidAssetStatusException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(
-                ErrorResponse(
-                    code = "INVALID_ASSET_STATUS",
-                    message = exception.message ?: "Invalid asset status.",
-                )
+                ApiResponse.error(code = "INVALID_ASSET_STATUS", message = exception.message ?: "Invalid asset status.")
             )
     }
 
     @ExceptionHandler(InvalidDateRangeException::class)
-    fun handleInvalidDateRange(exception: InvalidDateRangeException): ResponseEntity<ErrorResponse> {
+    fun handleInvalidDateRange(exception: InvalidDateRangeException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(
-                ErrorResponse(
-                    code = "INVALID_DATE_RANGE",
-                    message = exception.message ?: "Invalid date range.",
-                )
+                ApiResponse.error(code = "INVALID_DATE_RANGE", message = exception.message ?: "Invalid date range.")
             )
     }
 
     @ExceptionHandler(PriceConcurrencyException::class)
-    fun handlePriceConcurrency(exception: PriceConcurrencyException): ResponseEntity<ErrorResponse> {
+    fun handlePriceConcurrency(exception: PriceConcurrencyException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(
-                ErrorResponse(
+                ApiResponse.error(
                     code = "CONCURRENCY_ERROR",
                     message = exception.message ?: "Price update conflict occurred. Please retry.",
                 )
@@ -94,13 +79,10 @@ class PriceExceptionHandler {
         MethodArgumentTypeMismatchException::class,
         DataIntegrityViolationException::class,
     )
-    fun handleInvalidRequest(): ResponseEntity<ErrorResponse> {
+    fun handleInvalidRequest(): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(
-                ErrorResponse(
-                    code = "INVALID_REQUEST",
-                    message = "Invalid request.",
-                )
+                ApiResponse.error(code = "INVALID_REQUEST", message = "Invalid request.")
             )
     }
 }

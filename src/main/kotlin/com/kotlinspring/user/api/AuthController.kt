@@ -1,6 +1,6 @@
 package com.kotlinspring.user.api
 
-import com.kotlinspring.common.api.ErrorResponse
+import com.kotlinspring.common.api.ApiResponse
 import com.kotlinspring.user.application.CreateUserCommand
 import com.kotlinspring.user.application.UserUseCase
 import com.kotlinspring.user.application.security.CurrentUserPrincipal
@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponse as OpenApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
@@ -54,18 +54,20 @@ class AuthController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "200",
                 description = "CSRF token issued.",
-                content = [Content(schema = Schema(implementation = CsrfResponse::class))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
         ]
     )
-    fun csrf(@Parameter(hidden = true) csrfToken: CsrfToken): CsrfResponse {
-        return CsrfResponse(
-            parameterName = csrfToken.parameterName,
-            headerName = csrfToken.headerName,
-            token = csrfToken.token,
+    fun csrf(@Parameter(hidden = true) csrfToken: CsrfToken): ApiResponse<CsrfResponse> {
+        return ApiResponse.success(
+            CsrfResponse(
+                parameterName = csrfToken.parameterName,
+                headerName = csrfToken.headerName,
+                token = csrfToken.token,
+            )
         )
     }
 
@@ -78,20 +80,20 @@ class AuthController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "200",
                 description = "Login succeeded.",
-                content = [Content(schema = Schema(implementation = UserResponse::class))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "401",
                 description = "Username or password is invalid.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"UNAUTHORIZED","message":"Authentication failed."}"""
+                                value = """{"code":"UNAUTHORIZED","message":"Authentication failed.","data":null}"""
                             ),
                         ]
                     ),
@@ -103,7 +105,7 @@ class AuthController(
         @Valid @RequestBody request: LoginRequest,
         servletRequest: HttpServletRequest,
         servletResponse: HttpServletResponse,
-    ): UserResponse {
+    ): ApiResponse<UserResponse> {
         val authentication = authenticationManager.authenticate(
             UsernamePasswordAuthenticationToken(request.username, request.password)
         )
@@ -113,7 +115,7 @@ class AuthController(
         SecurityContextHolder.setContext(context)
         securityContextRepository.saveContext(context, servletRequest, servletResponse)
 
-        return UserResponse.from(authentication.principal as CurrentUserPrincipal)
+        return ApiResponse.success(UserResponse.from(authentication.principal as CurrentUserPrincipal))
     }
 
     @PostMapping("/register")
@@ -123,20 +125,21 @@ class AuthController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "201",
                 description = "User registered.",
-                content = [Content(schema = Schema(implementation = UserResponse::class))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "409",
                 description = "Username already exists.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"USER_ALREADY_EXISTS","message":"User 'admin' already exists."}"""
+                                value = """{"code":"USER_ALREADY_EXISTS","message":""" +
+                                    """"User 'admin' already exists.","data":null}"""
                             ),
                         ]
                     ),
@@ -144,7 +147,7 @@ class AuthController(
             ),
         ]
     )
-    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<UserResponse> {
+    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<ApiResponse<UserResponse>> {
         val user = userUseCase.create(
             CreateUserCommand(
                 username = request.username,
@@ -153,7 +156,7 @@ class AuthController(
         )
 
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(UserResponse.from(user))
+            .body(ApiResponse.success(UserResponse.from(user), message = "User registered."))
     }
 
     @PostMapping("/logout")
@@ -165,7 +168,7 @@ class AuthController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "204", description = "Logout succeeded."),
+            OpenApiResponse(responseCode = "204", description = "Logout succeeded."),
         ]
     )
     fun logout(
@@ -186,20 +189,21 @@ class AuthController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "200",
                 description = "Current user returned.",
-                content = [Content(schema = Schema(implementation = UserResponse::class))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "401",
                 description = "Authentication is required.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"UNAUTHORIZED","message":"Authentication is required."}"""
+                                value = """{"code":"UNAUTHORIZED","message":""" +
+                                    """"Authentication is required.","data":null}"""
                             ),
                         ]
                     ),
@@ -207,7 +211,7 @@ class AuthController(
             ),
         ]
     )
-    fun me(@AuthenticationPrincipal principal: CurrentUserPrincipal): UserResponse {
-        return UserResponse.from(principal)
+    fun me(@AuthenticationPrincipal principal: CurrentUserPrincipal): ApiResponse<UserResponse> {
+        return ApiResponse.success(UserResponse.from(principal))
     }
 }

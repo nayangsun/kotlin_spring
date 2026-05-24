@@ -1,14 +1,13 @@
 package com.kotlinspring.market.api
 
-import com.kotlinspring.common.api.ErrorResponse
+import com.kotlinspring.common.api.ApiResponse
 import com.kotlinspring.market.application.CreateMarketCommand
 import com.kotlinspring.market.application.MarketUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.ExampleObject
-import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponse as OpenApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -35,17 +34,17 @@ class MarketController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "200",
                 description = "Markets retrieved successfully.",
-                content = [Content(array = ArraySchema(schema = Schema(implementation = MarketResponse::class)))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
         ]
     )
-    fun getMarkets(): ResponseEntity<List<MarketResponse>> {
+    fun getMarkets(): ResponseEntity<ApiResponse<List<MarketResponse>>> {
         val response = marketUseCase.getAll().map(MarketResponse::from)
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(ApiResponse.success(response))
     }
 
     @GetMapping("/markets/{marketId}")
@@ -56,20 +55,21 @@ class MarketController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "200",
                 description = "Market retrieved successfully.",
-                content = [Content(schema = Schema(implementation = MarketResponse::class))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "404",
                 description = "Market was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"MARKET_NOT_FOUND","message":"Market '999' was not found."}"""
+                                value = """{"code":"MARKET_NOT_FOUND","message":""" +
+                                    """"Market '999' was not found.","data":null}"""
                             ),
                         ]
                     ),
@@ -77,10 +77,10 @@ class MarketController(
             ),
         ]
     )
-    fun getMarket(@PathVariable marketId: Long): ResponseEntity<MarketResponse> {
+    fun getMarket(@PathVariable marketId: Long): ResponseEntity<ApiResponse<MarketResponse>> {
         val response = MarketResponse.from(marketUseCase.getById(marketId))
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(ApiResponse.success(response))
     }
 
     @GetMapping("/markets/name/{name}")
@@ -91,20 +91,21 @@ class MarketController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "200",
                 description = "Market retrieved successfully.",
-                content = [Content(schema = Schema(implementation = MarketResponse::class))]
+                content = [Content(schema = Schema(implementation = ApiResponse::class))]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "404",
                 description = "Market was not found.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"MARKET_NOT_FOUND","message":"Market 'UNKNOWN' was not found."}"""
+                                value = """{"code":"MARKET_NOT_FOUND","message":""" +
+                                    """"Market 'UNKNOWN' was not found.","data":null}"""
                             ),
                         ]
                     ),
@@ -112,10 +113,10 @@ class MarketController(
             ),
         ]
     )
-    fun getMarketByName(@PathVariable name: String): ResponseEntity<MarketResponse> {
+    fun getMarketByName(@PathVariable name: String): ResponseEntity<ApiResponse<MarketResponse>> {
         val response = MarketResponse.from(marketUseCase.getByName(name))
 
-        return ResponseEntity.ok(response)
+        return ResponseEntity.ok(ApiResponse.success(response))
     }
 
     @PostMapping("/markets")
@@ -126,31 +127,31 @@ class MarketController(
     )
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "201", description = "Market created successfully."),
-            ApiResponse(
+            OpenApiResponse(responseCode = "201", description = "Market created successfully."),
+            OpenApiResponse(
                 responseCode = "400",
                 description = "Request validation failed.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
-                                value = """{"code":"INVALID_REQUEST","message":"Invalid request."}"""
+                                value = """{"code":"INVALID_REQUEST","message":"Invalid request.","data":null}"""
                             ),
                         ]
                     ),
                 ]
             ),
-            ApiResponse(
+            OpenApiResponse(
                 responseCode = "409",
                 description = "A market with the same name already exists.",
                 content = [
                     Content(
-                        schema = Schema(implementation = ErrorResponse::class),
+                        schema = Schema(implementation = ApiResponse::class),
                         examples = [
                             ExampleObject(
                                 value = """{"code":"MARKET_ALREADY_EXISTS","message":""" +
-                                    """"Market 'NASDAQ' already exists."}"""
+                                    """"Market 'NASDAQ' already exists.","data":null}"""
                             ),
                         ]
                     ),
@@ -158,7 +159,7 @@ class MarketController(
             ),
         ]
     )
-    fun createMarket(@Valid @RequestBody request: CreateMarketRequest): ResponseEntity<Void> {
+    fun createMarket(@Valid @RequestBody request: CreateMarketRequest): ResponseEntity<ApiResponse<Nothing>> {
         marketUseCase.create(
             CreateMarketCommand(
                 name = request.name,
@@ -166,6 +167,7 @@ class MarketController(
             )
         )
 
-        return ResponseEntity.status(HttpStatus.CREATED).build()
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(message = "Market created successfully."))
     }
 }

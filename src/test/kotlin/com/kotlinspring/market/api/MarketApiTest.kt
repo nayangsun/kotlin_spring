@@ -59,9 +59,9 @@ class MarketApiTest : BehaviorSpec({
 
                 mockMvc.perform(get("/markets"))
                     .andExpect(status().isOk)
-                    .andExpect(jsonPath("$[0].id").value(1))
-                    .andExpect(jsonPath("$[0].name").value("KOSPI"))
-                    .andExpect(jsonPath("$[0].timezone").value("Asia/Seoul"))
+                    .andExpect(jsonPath("$.data[0].id").value(1))
+                    .andExpect(jsonPath("$.data[0].name").value("KOSPI"))
+                    .andExpect(jsonPath("$.data[0].timezone").value("Asia/Seoul"))
 
                 verify(exactly = 1) {
                     marketUseCase.getAll()
@@ -88,9 +88,9 @@ class MarketApiTest : BehaviorSpec({
 
                 mockMvc.perform(get("/markets/1"))
                     .andExpect(status().isOk)
-                    .andExpect(jsonPath("$.id").value(1))
-                    .andExpect(jsonPath("$.name").value("KOSPI"))
-                    .andExpect(jsonPath("$.timezone").value("Asia/Seoul"))
+                    .andExpect(jsonPath("$.data.id").value(1))
+                    .andExpect(jsonPath("$.data.name").value("KOSPI"))
+                    .andExpect(jsonPath("$.data.timezone").value("Asia/Seoul"))
 
                 verify(exactly = 1) {
                     marketUseCase.getById(1L)
@@ -114,9 +114,9 @@ class MarketApiTest : BehaviorSpec({
 
                 mockMvc.perform(get("/markets/name/KOSPI"))
                     .andExpect(status().isOk)
-                    .andExpect(jsonPath("$.id").value(1))
-                    .andExpect(jsonPath("$.name").value("KOSPI"))
-                    .andExpect(jsonPath("$.timezone").value("Asia/Seoul"))
+                    .andExpect(jsonPath("$.data.id").value(1))
+                    .andExpect(jsonPath("$.data.name").value("KOSPI"))
+                    .andExpect(jsonPath("$.data.timezone").value("Asia/Seoul"))
 
                 verify(exactly = 1) {
                     marketUseCase.getByName("KOSPI")
