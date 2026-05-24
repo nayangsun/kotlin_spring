@@ -14,7 +14,6 @@ import com.kotlinspring.price.domain.PriceConcurrencyException
 import com.kotlinspring.price.domain.PriceHistory
 import com.kotlinspring.price.domain.PriceHistoryRepository
 import jakarta.persistence.OptimisticLockException
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.retry.backoff.BackOffInterruptedException
 import org.springframework.retry.support.RetryTemplate
@@ -42,7 +41,6 @@ class PriceService(
         )
         .retryOn(ObjectOptimisticLockingFailureException::class.java)
         .retryOn(OptimisticLockException::class.java)
-        .retryOn(DataIntegrityViolationException::class.java)
         .retryOn(PriceConcurrencyException::class.java)
         .build()
 
@@ -174,8 +172,6 @@ class PriceService(
         } catch (exception: ObjectOptimisticLockingFailureException) {
             throw PriceConcurrencyException(exception)
         } catch (exception: OptimisticLockException) {
-            throw PriceConcurrencyException(exception)
-        } catch (exception: DataIntegrityViolationException) {
             throw PriceConcurrencyException(exception)
         } catch (exception: BackOffInterruptedException) {
             Thread.currentThread().interrupt()

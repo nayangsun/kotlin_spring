@@ -24,7 +24,10 @@ class LatestPriceRepositoryAdapter(
         } catch (exception: ObjectOptimisticLockingFailureException) {
             throw PriceConcurrencyException(exception)
         } catch (exception: DataIntegrityViolationException) {
-            throw PriceConcurrencyException(exception)
+            if (exception.isLatestPricePrimaryKeyViolation()) {
+                throw PriceConcurrencyException(exception)
+            }
+            throw exception
         }
     }
 }
