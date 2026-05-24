@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -27,6 +28,7 @@ class MarketController(
 ) {
 
     @GetMapping("/markets")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SYSTEM')")
     @Operation(
         summary = "List markets",
         description = "Returns all registered markets."
@@ -47,6 +49,7 @@ class MarketController(
     }
 
     @GetMapping("/markets/{marketId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SYSTEM')")
     @Operation(
         summary = "Get market",
         description = "Returns a registered market by id."
@@ -81,6 +84,7 @@ class MarketController(
     }
 
     @GetMapping("/markets/name/{name}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SYSTEM')")
     @Operation(
         summary = "Get market by name",
         description = "Returns a registered market by name."
@@ -115,6 +119,7 @@ class MarketController(
     }
 
     @PostMapping("/markets")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Create market",
         description = "Registers a new market with a unique name and timezone."

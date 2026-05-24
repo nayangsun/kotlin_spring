@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -28,6 +29,7 @@ class PriceController(
 ) {
 
     @PostMapping("/markets/{marketId}/assets/{assetId}/prices")
+    @PreAuthorize("hasRole('SYSTEM')")
     @Operation(
         summary = "Create price history",
         description = "Stores an asset price history and updates the latest price in one transaction."
@@ -84,6 +86,7 @@ class PriceController(
     }
 
     @GetMapping("/markets/{marketId}/assets/{assetId}/prices")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SYSTEM')")
     @Operation(
         summary = "Get price histories",
         description = "Returns asset price histories in the requested timestamp range."
@@ -105,6 +108,7 @@ class PriceController(
     }
 
     @GetMapping("/markets/{marketId}/assets/{assetId}/prices/statistics")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SYSTEM')")
     @Operation(
         summary = "Get price statistics",
         description = "Returns min, max, and average price for an asset in the requested timestamp range."

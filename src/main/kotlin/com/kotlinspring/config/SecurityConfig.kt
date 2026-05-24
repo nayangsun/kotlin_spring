@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
@@ -88,12 +87,6 @@ class SecurityConfig {
             }
             .authorizeHttpRequests {
                 it.requestMatchers(*publicEndpointPatterns).permitAll()
-                it.requestMatchers(HttpMethod.GET, "/auth/me").authenticated()
-                it.requestMatchers(HttpMethod.GET, "/markets", "/markets/**").hasAnyRole("USER", "ADMIN", "SYSTEM")
-                it.requestMatchers(HttpMethod.POST, "/markets").hasRole("ADMIN")
-                it.requestMatchers(HttpMethod.POST, "/markets/*/assets").hasRole("ADMIN")
-                it.requestMatchers(HttpMethod.PATCH, "/markets/*/assets/*/status").hasRole("ADMIN")
-                it.requestMatchers(HttpMethod.POST, "/markets/*/assets/*/prices").hasRole("SYSTEM")
                 it.anyRequest().authenticated()
             }
             .build()

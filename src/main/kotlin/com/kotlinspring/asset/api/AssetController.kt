@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -29,6 +30,7 @@ class AssetController(
 ) {
 
     @GetMapping("/markets/{marketId}/assets")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SYSTEM')")
     @Operation(
         summary = "List assets",
         description = "Returns assets registered in a market."
@@ -63,6 +65,7 @@ class AssetController(
     }
 
     @GetMapping("/markets/{marketId}/assets/{assetId}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SYSTEM')")
     @Operation(
         summary = "Get asset",
         description = "Returns an asset registered in a market."
@@ -106,6 +109,7 @@ class AssetController(
     }
 
     @PostMapping("/markets/{marketId}/assets")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Create asset",
         description = "Registers a new asset in an existing market."
@@ -175,6 +179,7 @@ class AssetController(
     }
 
     @PatchMapping("/markets/{marketId}/assets/{assetId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
         summary = "Update asset status",
         description = "Changes the status of an asset registered in a market."
