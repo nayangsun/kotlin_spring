@@ -480,13 +480,14 @@ ID 단건 조회
 
 ### 특정 자산의 가격 이력 조회
 
-`GET /markets/{marketId}/assets/{assetId}/prices`
+`GET /markets/{marketId}/assets/{assetId}/prices?from=2026-05-01T00:00:00&to=2026-05-03T23:59:59`
 
 ### 요구사항
 
 - 조회 API는 `USER`, `ADMIN`, `SYSTEM` 모두 접근할 수 있습니다.
 - 존재하지 않는 마켓이면 `404 Not Found`를 반환합니다.
 - 존재하지 않는 자산이거나 마켓과 자산의 관계가 맞지 않으면 `404 Not Found`를 반환합니다.
+- 가격 이력 조회는 `from`, `to` 기간 조건에 해당하는 이력을 시간순으로 반환합니다.
 - 자산 목록 조회는 이후 필요에 따라 `status`, `symbol`, `currency` 같은 검색 조건을 추가할 수 있습니다.
 - 가격 이력 조회는 `from`, `to` 기간 조건을 받을 수 있습니다.
 - `from`, `to`가 모두 주어졌다면 `from`은 `to`보다 이전이어야 합니다.

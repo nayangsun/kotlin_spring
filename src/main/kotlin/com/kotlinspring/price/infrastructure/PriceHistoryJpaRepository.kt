@@ -8,6 +8,12 @@ import java.time.LocalDateTime
 
 interface PriceHistoryJpaRepository : JpaRepository<PriceHistoryJpaEntity, Long> {
 
+    fun findAllByAssetIdAndTimestampBetweenOrderByTimestampAscIdAsc(
+        assetId: Long,
+        from: LocalDateTime,
+        to: LocalDateTime,
+    ): List<PriceHistoryJpaEntity>
+
     @Query(
         value = """
             SELECT

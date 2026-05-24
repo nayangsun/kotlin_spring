@@ -20,6 +20,16 @@ class PriceHistoryRepositoryAdapter(
         return priceHistoryJpaRepository.save(PriceHistoryJpaEntity.from(priceHistory)).toDomain()
     }
 
+    override fun findAllByAssetIdAndTimestampBetween(
+        assetId: Long,
+        from: LocalDateTime,
+        to: LocalDateTime,
+    ): List<PriceHistory> {
+        return priceHistoryJpaRepository
+            .findAllByAssetIdAndTimestampBetweenOrderByTimestampAscIdAsc(assetId, from, to)
+            .map { it.toDomain() }
+    }
+
     override fun statistics(assetId: Long, from: LocalDateTime, to: LocalDateTime): PriceStatistics {
         val statistics = priceHistoryJpaRepository.statistics(assetId, from, to)
         return PriceStatistics(

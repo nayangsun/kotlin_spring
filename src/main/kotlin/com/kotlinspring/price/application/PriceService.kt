@@ -82,6 +82,32 @@ class PriceService(
     }
 
     @Transactional(readOnly = true)
+    override fun histories(
+        marketId: Long,
+        assetId: Long,
+        from: LocalDateTime,
+        to: LocalDateTime,
+    ): PriceHistoriesResult {
+        validateMarketExists(marketId)
+        validateDateRange(from, to)
+
+        val asset = assetRepository.findByMarketIdAndId(marketId, assetId)
+            ?: throw AssetNotFoundException(marketId, assetId)
+        val histories = priceHistoryRepository.findAllByAssetIdAndTimestampBetween(
+            assetId = assetId,
+            from = from,
+            to = to,
+        )
+
+        return PriceHistoriesResult(
+            assetId = requireNotNull(asset.id),
+            symbol = asset.symbol,
+            currency = asset.currency,
+            prices = histories,
+        )
+    }
+
+    @Transactional(readOnly = true)
     override fun statistics(
         marketId: Long,
         assetId: Long,
