@@ -36,7 +36,7 @@ class LatestPriceJpaEntity(
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant? = null,
+    var updatedAt: Instant = Instant.now(),
 ) {
 
     fun toDomain(): LatestPrice {
@@ -58,7 +58,7 @@ class LatestPriceJpaEntity(
                 timestamp = latestPrice.timestamp,
                 source = latestPrice.source,
                 version = latestPrice.version,
-                updatedAt = latestPrice.updatedAt,
+                updatedAt = latestPrice.updatedAt ?: Instant.now(),
             )
         }
     }

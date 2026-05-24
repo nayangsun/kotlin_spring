@@ -44,11 +44,11 @@ class AssetJpaEntity(
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    var createdAt: Instant? = null,
+    var createdAt: Instant = Instant.now(),
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant? = null,
+    var updatedAt: Instant = Instant.now(),
 ) {
 
     fun toDomain(): Asset {
@@ -66,6 +66,7 @@ class AssetJpaEntity(
 
     companion object {
         fun from(asset: Asset): AssetJpaEntity {
+            val now = Instant.now()
             return AssetJpaEntity(
                 id = asset.id,
                 marketId = asset.marketId,
@@ -73,8 +74,8 @@ class AssetJpaEntity(
                 name = asset.name,
                 status = asset.status,
                 currency = asset.currency,
-                createdAt = asset.createdAt,
-                updatedAt = asset.updatedAt,
+                createdAt = asset.createdAt ?: now,
+                updatedAt = asset.updatedAt ?: now,
             )
         }
     }

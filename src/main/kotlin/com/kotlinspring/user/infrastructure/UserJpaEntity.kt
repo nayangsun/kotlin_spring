@@ -44,9 +44,9 @@ class UserJpaEntity(
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    var createdAt: Instant? = null,
+    var createdAt: Instant = Instant.now(),
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant? = null,
+    var updatedAt: Instant = Instant.now(),
 )

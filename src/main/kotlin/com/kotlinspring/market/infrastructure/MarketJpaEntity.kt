@@ -29,11 +29,11 @@ class MarketJpaEntity(
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    var createdAt: Instant? = null,
+    var createdAt: Instant = Instant.now(),
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant? = null,
+    var updatedAt: Instant = Instant.now(),
 ) {
 
     fun toDomain(): Market {
@@ -48,12 +48,13 @@ class MarketJpaEntity(
 
     companion object {
         fun from(market: Market): MarketJpaEntity {
+            val now = Instant.now()
             return MarketJpaEntity(
                 id = market.id,
                 name = market.name,
                 timezone = market.timezone,
-                createdAt = market.createdAt,
-                updatedAt = market.updatedAt,
+                createdAt = market.createdAt ?: now,
+                updatedAt = market.updatedAt ?: now,
             )
         }
     }

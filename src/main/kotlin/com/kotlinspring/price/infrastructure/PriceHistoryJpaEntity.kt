@@ -36,15 +36,15 @@ class PriceHistoryJpaEntity(
     var source: String = "",
 
     @Column(name = "received_at", nullable = false)
-    var receivedAt: Instant? = null,
+    var receivedAt: Instant = Instant.now(),
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    var createdAt: Instant? = null,
+    var createdAt: Instant = Instant.now(),
 
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: Instant? = null,
+    var updatedAt: Instant = Instant.now(),
 ) {
 
     fun toDomain(): PriceHistory {
@@ -54,7 +54,7 @@ class PriceHistoryJpaEntity(
             price = price,
             timestamp = timestamp,
             source = source,
-            receivedAt = requireNotNull(receivedAt),
+            receivedAt = receivedAt,
             createdAt = createdAt,
             updatedAt = updatedAt,
         )
@@ -62,6 +62,7 @@ class PriceHistoryJpaEntity(
 
     companion object {
         fun from(priceHistory: PriceHistory): PriceHistoryJpaEntity {
+            val now = Instant.now()
             return PriceHistoryJpaEntity(
                 id = priceHistory.id,
                 assetId = priceHistory.assetId,
@@ -69,8 +70,8 @@ class PriceHistoryJpaEntity(
                 timestamp = priceHistory.timestamp,
                 source = priceHistory.source,
                 receivedAt = priceHistory.receivedAt,
-                createdAt = priceHistory.createdAt,
-                updatedAt = priceHistory.updatedAt,
+                createdAt = priceHistory.createdAt ?: now,
+                updatedAt = priceHistory.updatedAt ?: now,
             )
         }
     }
