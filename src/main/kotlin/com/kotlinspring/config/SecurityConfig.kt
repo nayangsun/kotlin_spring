@@ -1,5 +1,7 @@
 package com.kotlinspring.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.kotlinspring.common.api.ErrorResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
@@ -36,7 +38,9 @@ import java.util.function.Supplier
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableMethodSecurity
-class SecurityConfig {
+class SecurityConfig(
+    private val objectMapper: ObjectMapper,
+) {
 
     @Bean
     fun securityFilterChain(
@@ -163,7 +167,7 @@ class SecurityConfig {
         response.status = status
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = Charsets.UTF_8.name()
-        response.writer.write("""{"code":"$code","message":"$message"}""")
+        objectMapper.writeValue(response.writer, ErrorResponse(code = code, message = message))
     }
 
     private class SpaCsrfTokenRequestHandler : CsrfTokenRequestHandler {
