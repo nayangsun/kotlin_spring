@@ -83,6 +83,27 @@ class PriceController(
         return ResponseEntity.status(HttpStatus.CREATED).build()
     }
 
+    @GetMapping("/markets/{marketId}/assets/{assetId}/prices")
+    @Operation(
+        summary = "Get price histories",
+        description = "Returns asset price histories in the requested timestamp range."
+    )
+    fun histories(
+        @PathVariable marketId: Long,
+        @PathVariable assetId: Long,
+        @RequestParam from: LocalDateTime,
+        @RequestParam to: LocalDateTime,
+    ): PriceHistoriesResponse {
+        return PriceHistoriesResponse.from(
+            priceUseCase.histories(
+                marketId = marketId,
+                assetId = assetId,
+                from = from,
+                to = to,
+            )
+        )
+    }
+
     @GetMapping("/markets/{marketId}/assets/{assetId}/prices/statistics")
     @Operation(
         summary = "Get price statistics",

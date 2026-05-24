@@ -5,12 +5,14 @@ import com.kotlinspring.asset.domain.AssetNotFoundException
 import com.kotlinspring.asset.domain.AssetStatus
 import com.kotlinspring.market.domain.MarketNotFoundException
 import com.kotlinspring.price.application.CreatePriceCommand
+import com.kotlinspring.price.application.PriceHistoriesResult
 import com.kotlinspring.price.application.PriceStatisticsResult
 import com.kotlinspring.price.application.PriceUseCase
 import com.kotlinspring.price.domain.InvalidAssetStatusException
 import com.kotlinspring.price.domain.InvalidDateRangeException
 import com.kotlinspring.price.domain.InvalidPriceException
 import com.kotlinspring.price.domain.PriceConcurrencyException
+import com.kotlinspring.price.domain.PriceHistory
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.every
 import io.mockk.mockk
@@ -28,6 +30,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import tools.jackson.module.kotlin.jsonMapper
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 class PriceApiTest : BehaviorSpec({
 
@@ -232,6 +235,91 @@ class PriceApiTest : BehaviorSpec({
                     .andExpect(status().isConflict)
                     .andExpect(jsonPath("$.code").value("CONCURRENCY_ERROR"))
                     .andExpect(jsonPath("$.message").value("Price update conflict occurred. Please retry."))
+            }
+        }
+    }
+
+    given("사용자가 가격 이력을 조회할 때") {
+
+        `when`("유효한 기간을 보내면") {
+            then("기간 내 가격 이력을 반환한다") {
+                val priceUseCase = mockk<PriceUseCase>()
+                val mockMvc = createMockMvc(priceUseCase)
+                val receivedAt = OffsetDateTime.parse("2026-05-03T10:00:03+09:00")
+
+                every {
+                    priceUseCase.histories(any(), any(), any(), any())
+                } returns PriceHistoriesResult(
+                    assetId = 10L,
+                    symbol = "005930",
+                    currency = AssetCurrency.KRW,
+                    prices = listOf(
+                        PriceHistory(
+                            id = 1L,
+                            assetId = 10L,
+                            price = BigDecimal("71000.0000"),
+                            timestamp = LocalDateTime.parse("2026-05-01T10:00:00"),
+                            source = "SYSTEM_A",
+                            receivedAt = receivedAt,
+                        )
+                    ),
+                )
+
+                mockMvc.perform(
+                    get("/markets/1/assets/10/prices")
+                        .param("from", "2026-05-01T00:00:00")
+                        .param("to", "2026-05-03T23:59:59")
+                )
+                    .andExpect(status().isOk)
+                    .andExpect(jsonPath("$.assetId").value(10))
+                    .andExpect(jsonPath("$.symbol").value("005930"))
+                    .andExpect(jsonPath("$.currency").value("KRW"))
+                    .andExpect(jsonPath("$.prices[0].id").value(1))
+                    .andExpect(jsonPath("$.prices[0].price").value(71000.0000))
+                    .andExpect(jsonPath("$.prices[0].timestamp").value("2026-05-01T10:00:00"))
+                    .andExpect(jsonPath("$.prices[0].source").value("SYSTEM_A"))
+
+                verify(exactly = 1) {
+                    priceUseCase.histories(
+                        marketId = 1L,
+                        assetId = 10L,
+                        from = LocalDateTime.parse("2026-05-01T00:00:00"),
+                        to = LocalDateTime.parse("2026-05-03T23:59:59"),
+                    )
+                }
+            }
+        }
+
+        `when`("날짜 범위가 유효하지 않으면") {
+            then("날짜 범위 오류를 반환한다") {
+                val priceUseCase = mockk<PriceUseCase>()
+                val mockMvc = createMockMvc(priceUseCase)
+
+                every {
+                    priceUseCase.histories(any(), any(), any(), any())
+                } throws InvalidDateRangeException()
+
+                mockMvc.perform(
+                    get("/markets/1/assets/10/prices")
+                        .param("from", "2026-05-03T23:59:59")
+                        .param("to", "2026-05-01T00:00:00")
+                )
+                    .andExpect(status().isBadRequest)
+                    .andExpect(jsonPath("$.code").value("INVALID_DATE_RANGE"))
+            }
+        }
+
+        `when`("날짜 파라미터가 없으면") {
+            then("잘못된 요청 오류를 반환한다") {
+                val priceUseCase = mockk<PriceUseCase>()
+                val mockMvc = createMockMvc(priceUseCase)
+
+                mockMvc.perform(
+                    get("/markets/1/assets/10/prices")
+                        .param("from", "2026-05-01T00:00:00")
+                )
+                    .andExpect(status().isBadRequest)
+                    .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
             }
         }
     }

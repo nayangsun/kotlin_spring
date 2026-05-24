@@ -331,6 +331,97 @@ class CreatePriceIntegrationTest : BehaviorSpec() {
             }
         }
 
+        given("사용자가 가격 이력을 조회할 때") {
+
+            `when`("기간 내 가격 이력이 있으면") {
+                then("기간 내 이력을 시간순으로 반환한다") {
+                    val market = marketJpaRepository.save(
+                        MarketJpaEntity(
+                            name = "KOSPI",
+                            timezone = "Asia/Seoul",
+                        )
+                    )
+                    val asset = assetJpaRepository.save(
+                        AssetJpaEntity(
+                            marketId = market.id!!,
+                            symbol = "005930",
+                            name = "Samsung Electronics",
+                            status = AssetStatus.ACTIVE,
+                            currency = AssetCurrency.KRW,
+                        )
+                    )
+
+                    listOf(
+                        "2026-04-30T10:00:00" to BigDecimal("70000"),
+                        "2026-05-02T10:00:00" to BigDecimal("73500"),
+                        "2026-05-01T10:00:00" to BigDecimal("71000"),
+                        "2026-05-04T10:00:00" to BigDecimal("74000"),
+                    ).forEach { (timestamp, price) ->
+                        priceUseCase.create(
+                            marketId = market.id!!,
+                            assetId = asset.id!!,
+                            command = CreatePriceCommand(
+                                price = price,
+                                timestamp = LocalDateTime.parse(timestamp),
+                                source = "SYSTEM_A",
+                            )
+                        )
+                    }
+
+                    val result = priceUseCase.histories(
+                        marketId = market.id!!,
+                        assetId = asset.id!!,
+                        from = LocalDateTime.parse("2026-05-01T00:00:00"),
+                        to = LocalDateTime.parse("2026-05-03T23:59:59"),
+                    )
+
+                    result.assetId shouldBe asset.id
+                    result.symbol shouldBe "005930"
+                    result.currency shouldBe AssetCurrency.KRW
+                    result.prices.map { it.price } shouldBe listOf(
+                        BigDecimal("71000.0000"),
+                        BigDecimal("73500.0000"),
+                    )
+                    result.prices.map { it.timestamp } shouldBe listOf(
+                        LocalDateTime.parse("2026-05-01T10:00:00"),
+                        LocalDateTime.parse("2026-05-02T10:00:00"),
+                    )
+                }
+            }
+
+            `when`("기간 내 가격 이력이 없으면") {
+                then("빈 목록을 반환한다") {
+                    val market = marketJpaRepository.save(
+                        MarketJpaEntity(
+                            name = "NASDAQ",
+                            timezone = "America/New_York",
+                        )
+                    )
+                    val asset = assetJpaRepository.save(
+                        AssetJpaEntity(
+                            marketId = market.id!!,
+                            symbol = "AAPL",
+                            name = "Apple",
+                            status = AssetStatus.ACTIVE,
+                            currency = AssetCurrency.USD,
+                        )
+                    )
+
+                    val result = priceUseCase.histories(
+                        marketId = market.id!!,
+                        assetId = asset.id!!,
+                        from = LocalDateTime.parse("2026-05-01T00:00:00"),
+                        to = LocalDateTime.parse("2026-05-03T23:59:59"),
+                    )
+
+                    result.assetId shouldBe asset.id
+                    result.symbol shouldBe "AAPL"
+                    result.currency shouldBe AssetCurrency.USD
+                    result.prices shouldBe emptyList()
+                }
+            }
+        }
+
         given("사용자가 가격 통계를 조회할 때") {
 
             `when`("기간 내 가격 이력이 있으면") {
