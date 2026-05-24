@@ -1,10 +1,10 @@
 package com.kotlinspring.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.kotlinspring.common.api.ErrorResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType
@@ -33,12 +33,14 @@ import org.springframework.util.StringUtils
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import tools.jackson.databind.ObjectMapper
 import java.util.function.Supplier
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableMethodSecurity
 class SecurityConfig(
+    @Qualifier("jacksonJsonMapper")
     private val objectMapper: ObjectMapper,
 ) {
 
