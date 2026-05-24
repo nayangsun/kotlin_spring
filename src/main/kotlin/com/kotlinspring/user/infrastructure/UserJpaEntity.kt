@@ -1,5 +1,6 @@
 package com.kotlinspring.user.infrastructure
 
+import com.kotlinspring.user.domain.User
 import com.kotlinspring.user.domain.UserRole
 import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
@@ -49,4 +50,30 @@ class UserJpaEntity(
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     var updatedAt: Instant = Instant.now(),
-)
+) {
+
+    fun toDomain(): User {
+        return User(
+            id = id,
+            username = username,
+            password = password,
+            roles = roles.toSet(),
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
+    }
+
+    companion object {
+        fun from(user: User): UserJpaEntity {
+            val now = Instant.now()
+            return UserJpaEntity(
+                id = user.id,
+                username = user.username,
+                password = user.password,
+                roles = user.roles.toMutableSet(),
+                createdAt = user.createdAt ?: now,
+                updatedAt = user.updatedAt ?: now,
+            )
+        }
+    }
+}
