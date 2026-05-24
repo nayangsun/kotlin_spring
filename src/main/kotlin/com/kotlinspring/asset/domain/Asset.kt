@@ -1,6 +1,6 @@
 package com.kotlinspring.asset.domain
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 data class Asset(
     val id: Long? = null,
@@ -9,8 +9,8 @@ data class Asset(
     val name: String,
     val status: AssetStatus = AssetStatus.ACTIVE,
     val currency: AssetCurrency,
-    val createdAt: OffsetDateTime? = null,
-    val updatedAt: OffsetDateTime? = null,
+    val createdAt: Instant? = null,
+    val updatedAt: Instant? = null,
 ) {
     init {
         require(marketId > 0) { "Asset market id must be positive." }

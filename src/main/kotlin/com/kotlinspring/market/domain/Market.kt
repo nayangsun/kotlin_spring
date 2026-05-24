@@ -1,13 +1,13 @@
 package com.kotlinspring.market.domain
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 data class Market(
     val id: Long? = null,
     val name: String,
     val timezone: String,
-    val createdAt: OffsetDateTime? = null,
-    val updatedAt: OffsetDateTime? = null,
+    val createdAt: Instant? = null,
+    val updatedAt: Instant? = null,
 ) {
     init {
         require(name.isNotBlank()) { "Market name must not be blank." }

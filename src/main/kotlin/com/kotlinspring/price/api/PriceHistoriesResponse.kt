@@ -4,8 +4,8 @@ import com.kotlinspring.asset.domain.AssetCurrency
 import com.kotlinspring.price.application.PriceHistoriesResult
 import com.kotlinspring.price.domain.PriceHistory
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 data class PriceHistoriesResponse(
     val assetId: Long,
@@ -30,7 +30,7 @@ data class PriceHistoryResponse(
     val price: BigDecimal,
     val timestamp: LocalDateTime,
     val source: String,
-    val receivedAt: OffsetDateTime,
+    val receivedAt: Instant,
 ) {
     companion object {
         fun from(priceHistory: PriceHistory): PriceHistoryResponse {

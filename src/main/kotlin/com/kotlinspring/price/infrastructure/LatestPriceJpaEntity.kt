@@ -3,16 +3,18 @@ package com.kotlinspring.price.infrastructure
 import com.kotlinspring.price.domain.LatestPrice
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.Id
-import jakarta.persistence.PrePersist
-import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
 import jakarta.persistence.Version
+import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 @Entity
+@EntityListeners(AuditingEntityListener::class)
 @Table(name = "latest_prices")
 class LatestPriceJpaEntity(
     @Id
@@ -32,19 +34,10 @@ class LatestPriceJpaEntity(
     @Column(nullable = false)
     var version: Long? = null,
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: OffsetDateTime? = null,
+    var updatedAt: Instant? = null,
 ) {
-
-    @PrePersist
-    fun prePersist() {
-        updatedAt = OffsetDateTime.now()
-    }
-
-    @PreUpdate
-    fun preUpdate() {
-        updatedAt = OffsetDateTime.now()
-    }
 
     fun toDomain(): LatestPrice {
         return LatestPrice(

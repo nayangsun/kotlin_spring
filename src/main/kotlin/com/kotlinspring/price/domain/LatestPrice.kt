@@ -1,8 +1,8 @@
 package com.kotlinspring.price.domain
 
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 data class LatestPrice(
     val assetId: Long,
@@ -10,7 +10,7 @@ data class LatestPrice(
     val timestamp: LocalDateTime,
     val source: String,
     val version: Long? = null,
-    val updatedAt: OffsetDateTime? = null,
+    val updatedAt: Instant? = null,
 ) {
     init {
         require(assetId > 0) { "Latest price asset id must be positive." }

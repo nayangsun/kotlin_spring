@@ -3,7 +3,7 @@ package com.kotlinspring.asset.api
 import com.kotlinspring.asset.domain.Asset
 import com.kotlinspring.asset.domain.AssetCurrency
 import com.kotlinspring.asset.domain.AssetStatus
-import java.time.OffsetDateTime
+import java.time.Instant
 
 data class AssetResponse(
     val id: Long,
@@ -12,8 +12,8 @@ data class AssetResponse(
     val name: String,
     val status: AssetStatus,
     val currency: AssetCurrency,
-    val createdAt: OffsetDateTime,
-    val updatedAt: OffsetDateTime,
+    val createdAt: Instant,
+    val updatedAt: Instant,
 ) {
     companion object {
         fun from(asset: Asset): AssetResponse {

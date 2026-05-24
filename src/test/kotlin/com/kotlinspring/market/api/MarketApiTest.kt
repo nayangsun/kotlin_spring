@@ -19,7 +19,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import tools.jackson.module.kotlin.jsonMapper
-import java.time.OffsetDateTime
+import java.time.Instant
 
 class MarketApiTest : BehaviorSpec({
 
@@ -45,7 +45,7 @@ class MarketApiTest : BehaviorSpec({
             then("마켓 목록을 반환한다") {
                 val marketUseCase = mockk<MarketUseCase>()
                 val mockMvc = createMockMvc(marketUseCase)
-                val createdAt = OffsetDateTime.parse("2026-05-12T09:00:00Z")
+                val createdAt = Instant.parse("2026-05-12T09:00:00Z")
 
                 every { marketUseCase.getAll() } returns listOf(
                     Market(
@@ -76,7 +76,7 @@ class MarketApiTest : BehaviorSpec({
             then("마켓 정보를 반환한다") {
                 val marketUseCase = mockk<MarketUseCase>()
                 val mockMvc = createMockMvc(marketUseCase)
-                val createdAt = OffsetDateTime.parse("2026-05-12T09:00:00Z")
+                val createdAt = Instant.parse("2026-05-12T09:00:00Z")
 
                 every { marketUseCase.getById(1L) } returns Market(
                     id = 1L,
@@ -102,7 +102,7 @@ class MarketApiTest : BehaviorSpec({
             then("마켓 정보를 반환한다") {
                 val marketUseCase = mockk<MarketUseCase>()
                 val mockMvc = createMockMvc(marketUseCase)
-                val createdAt = OffsetDateTime.parse("2026-05-12T09:00:00Z")
+                val createdAt = Instant.parse("2026-05-12T09:00:00Z")
 
                 every { marketUseCase.getByName("KOSPI") } returns Market(
                     id = 1L,

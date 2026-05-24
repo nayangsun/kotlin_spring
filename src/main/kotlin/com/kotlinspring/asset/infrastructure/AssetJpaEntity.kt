@@ -5,17 +5,20 @@ import com.kotlinspring.asset.domain.AssetCurrency
 import com.kotlinspring.asset.domain.AssetStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EntityListeners
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.PrePersist
-import jakarta.persistence.PreUpdate
 import jakarta.persistence.Table
-import java.time.OffsetDateTime
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.annotation.LastModifiedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
+import java.time.Instant
 
 @Entity
+@EntityListeners(AuditingEntityListener::class)
 @Table(name = "assets")
 class AssetJpaEntity(
     @Id
@@ -39,24 +42,14 @@ class AssetJpaEntity(
     @Column(nullable = false)
     var currency: AssetCurrency = AssetCurrency.KRW,
 
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    var createdAt: OffsetDateTime? = null,
+    var createdAt: Instant? = null,
 
+    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: OffsetDateTime? = null,
+    var updatedAt: Instant? = null,
 ) {
-
-    @PrePersist
-    fun prePersist() {
-        val now = OffsetDateTime.now()
-        createdAt = now
-        updatedAt = now
-    }
-
-    @PreUpdate
-    fun preUpdate() {
-        updatedAt = OffsetDateTime.now()
-    }
 
     fun toDomain(): Asset {
         return Asset(
