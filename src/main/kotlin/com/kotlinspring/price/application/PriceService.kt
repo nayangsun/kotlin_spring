@@ -16,6 +16,8 @@ import com.kotlinspring.price.domain.PriceHistoryRepository
 import jakarta.persistence.OptimisticLockException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.retry.backoff.BackOffInterruptedException
+import org.springframework.retry.support.RetryTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
@@ -30,6 +32,19 @@ class PriceService(
     private val latestPriceRepository: LatestPriceRepository,
     private val transactionRunner: PriceTransactionRunner,
 ) : PriceUseCase {
+
+    private val priceConcurrencyRetryTemplate = RetryTemplate.builder()
+        .maxAttempts(MAX_CONCURRENCY_ATTEMPTS)
+        .exponentialBackoff(
+            CONCURRENCY_RETRY_INITIAL_BACKOFF_MILLIS,
+            CONCURRENCY_RETRY_BACKOFF_MULTIPLIER,
+            CONCURRENCY_RETRY_MAX_BACKOFF_MILLIS,
+        )
+        .retryOn(ObjectOptimisticLockingFailureException::class.java)
+        .retryOn(OptimisticLockException::class.java)
+        .retryOn(DataIntegrityViolationException::class.java)
+        .retryOn(PriceConcurrencyException::class.java)
+        .build()
 
     override fun create(marketId: Long, assetId: Long, command: CreatePriceCommand) {
         retryOnConcurrency {
@@ -152,45 +167,26 @@ class PriceService(
     }
 
     private fun retryOnConcurrency(block: () -> Unit) {
-        var retryCount = 0
-
-        while (true) {
-            try {
-                block()
-                return
-            } catch (exception: ObjectOptimisticLockingFailureException) {
-                retryCount = retryOrThrow(retryCount, exception)
-            } catch (exception: OptimisticLockException) {
-                retryCount = retryOrThrow(retryCount, exception)
-            } catch (exception: DataIntegrityViolationException) {
-                retryCount = retryOrThrow(retryCount, exception)
-            } catch (exception: PriceConcurrencyException) {
-                retryCount = retryOrThrow(retryCount, exception)
-            }
-        }
-    }
-
-    private fun retryOrThrow(retryCount: Int, cause: Throwable): Int {
-        if (retryCount >= MAX_CONCURRENCY_RETRIES) {
-            throw PriceConcurrencyException(cause)
-        }
-
-        sleepBeforeRetry(retryCount, cause)
-        return retryCount + 1
-    }
-
-    private fun sleepBeforeRetry(retryCount: Int, cause: Throwable) {
         try {
-            Thread.sleep(CONCURRENCY_RETRY_BACKOFF_MILLIS[retryCount])
-        } catch (exception: InterruptedException) {
+            priceConcurrencyRetryTemplate.execute<Unit, Throwable> {
+                block()
+            }
+        } catch (exception: ObjectOptimisticLockingFailureException) {
+            throw PriceConcurrencyException(exception)
+        } catch (exception: OptimisticLockException) {
+            throw PriceConcurrencyException(exception)
+        } catch (exception: DataIntegrityViolationException) {
+            throw PriceConcurrencyException(exception)
+        } catch (exception: BackOffInterruptedException) {
             Thread.currentThread().interrupt()
-            cause.addSuppressed(exception)
-            throw PriceConcurrencyException(cause)
+            throw PriceConcurrencyException(exception)
         }
     }
 
     private companion object {
-        const val MAX_CONCURRENCY_RETRIES = 3
-        val CONCURRENCY_RETRY_BACKOFF_MILLIS = longArrayOf(100, 200, 400)
+        const val MAX_CONCURRENCY_ATTEMPTS = 4
+        const val CONCURRENCY_RETRY_INITIAL_BACKOFF_MILLIS = 100L
+        const val CONCURRENCY_RETRY_BACKOFF_MULTIPLIER = 2.0
+        const val CONCURRENCY_RETRY_MAX_BACKOFF_MILLIS = 400L
     }
 }

@@ -29,6 +29,7 @@ dependencies {
 	implementation(libs.spring.boot.starter.flyway)
 	implementation(libs.spring.boot.starter.security)
 	implementation(libs.spring.boot.starter.validation)
+	implementation(libs.spring.retry)
 	runtimeOnly(libs.flyway.database.postgresql)
 	implementation(libs.spring.boot.starter.webmvc)
 	implementation(libs.kotlin.reflect)
