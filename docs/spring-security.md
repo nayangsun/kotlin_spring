@@ -1,4 +1,4 @@
-# Security
+# Spring Security
 
 API는 세션 쿠키 인증과 CSRF 보호를 사용합니다.
 세션 쿠키는 `HttpOnly`, `SameSite=Lax`로 설정합니다.

@@ -83,9 +83,9 @@ build/reports/detekt/detekt.xml
 build/reports/detekt/detekt.sarif
 ```
 
-### Security
+### Spring Security
 
-인증, CSRF, 개발용 계정, 권한 정책은 [docs/security.md](docs/security.md)에 정리되어 있습니다.
+인증, CSRF, 개발용 계정, 권한 정책은 [docs/spring-security.md](docs/spring-security.md)에 정리되어 있습니다.
 
 ### User Story
 
